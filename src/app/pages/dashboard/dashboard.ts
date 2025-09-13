@@ -9,12 +9,7 @@ interface MetricCard {
   bgColor: string;
 }
 
-interface Order {
-  id: string;
-  product: string;
-  date: string;
-  status: string;
-}
+// Removed Order interface - no longer needed
 
 @Component({
   selector: 'app-dashboard',
@@ -54,11 +49,7 @@ export class Dashboard {
     }
   ];
 
-  orders: Order[] = [
-    { id: '#05895', product: '1 Bamboo Watch, 3 Blue Band', date: '4h ago', status: 'new' },
-    { id: '#05852', product: '1 Bamboo Watch, 3 Blue Band', date: '6h ago', status: 'processing' },
-    { id: '#05605', product: '1 Bamboo Watch, 3 Blue Band', date: '1d ago', status: 'shipped' }
-  ];
+// Removed orders array - no longer needed
 
   chartData = [
     { month: '01', orders: 6, units: 4 },
@@ -83,10 +74,5 @@ export class Dashboard {
     { month: '20', orders: 11, units: 9 }
   ];
 
-  salesData = [
-    { category: 'Watches', value: 62, color: '#10b981' },
-    { category: 'Clothing', value: 20, color: '#f59e0b' }, 
-    { category: 'Gadgets', value: 15, color: '#3b82f6' },
-    { category: 'Accessories', value: 3, color: '#06b6d4' }
-  ];
+// Removed salesData array - no longer needed
 }
