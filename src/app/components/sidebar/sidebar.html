@@ -1,0 +1,35 @@
+<div class="sidebar">
+  <!-- Logo/Brand -->
+  <div class="sidebar-header">
+    <div class="brand">
+      <i class="pi pi-bolt brand-icon"></i>
+      <span class="brand-text">freya</span>
+    </div>
+  </div>
+
+  <!-- Navigation Menu -->
+  <nav class="sidebar-nav">
+    @for (menuGroup of menuItems; track menuGroup.label) {
+      <div class="menu-group">
+        <div class="menu-group-header" (click)="toggleMenuItem(menuGroup)">
+          <i [class]="menuGroup.icon"></i>
+          <span class="menu-label">{{ menuGroup.label }}</span>
+          <i class="pi pi-chevron-right expand-icon" [class.expanded]="menuGroup.expanded"></i>
+        </div>
+        
+        @if (menuGroup.expanded && menuGroup.items) {
+          <div class="menu-group-items">
+            @for (item of menuGroup.items; track item.label) {
+              <a class="menu-item" 
+                 [routerLink]="item.routerLink" 
+                 routerLinkActive="active">
+                <i [class]="item.icon"></i>
+                <span>{{ item.label }}</span>
+              </a>
+            }
+          </div>
+        }
+      </div>
+    }
+  </nav>
+</div>

@@ -1,0 +1,21 @@
+.main-layout {
+  min-height: 100vh;
+  background: #f8fafc;
+  width: 100%;
+}
+
+.content-container {
+  width: 100%;
+  min-height: 100vh;
+}
+
+* {
+  font-family: 'Inter', sans-serif;
+}
+
+/* PrimeNG overrides */
+:host ::ng-deep {
+  .p-component {
+    font-family: 'Inter', sans-serif;
+  }
+}

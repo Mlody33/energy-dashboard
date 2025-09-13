@@ -1,0 +1,152 @@
+<div class="dashboard">
+  <!-- Welcome Message -->
+  <div class="welcome-message">
+    <div class="welcome-icon">👋</div>
+    <span>Hello! Welcome to Freya! Before start please complete your profile to know you better.</span>
+  </div>
+
+  <!-- Metric Cards -->
+  <div class="metric-cards">
+    @for (card of metricCards; track card.title) {
+      <div class="metric-card" [style.background]="card.bgColor">
+        <div class="metric-content">
+          <div class="metric-icon">
+            <i [class]="card.icon" [style.color]="card.color"></i>
+          </div>
+          <div class="metric-details">
+            <div class="metric-title" [style.color]="card.color">{{ card.title }}</div>
+            <div class="metric-value" [style.color]="card.color">{{ card.value }}</div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="dashboard-content">
+    <!-- Orders Section -->
+    <div class="content-section orders-section">
+      <div class="section-header">
+        <h3>Orders</h3>
+        <p>Your monthly orders data from <strong>last 12 month</strong></p>
+        <div class="period-selector">
+          <select class="period-dropdown">
+            <option>Monthly</option>
+            <option>Weekly</option>
+            <option>Daily</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Chart Statistics -->
+      <div class="chart-stats">
+        <div class="stat-group">
+          <div class="stat-item">
+            <span class="stat-label">Your Orders</span>
+            <span class="stat-value">3921</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Units</span>
+            <span class="stat-value">4143</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Sales</span>
+            <span class="stat-value">$109,788.00</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Avg. sales/orders item</span>
+            <span class="stat-value">$28.00</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Avg. units/orders item</span>
+            <span class="stat-value">1.2</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart Area -->
+      <div class="chart-container">
+        <div class="chart-legend">
+          <div class="legend-item">
+            <div class="legend-color orders-color"></div>
+            <span>Orders</span>
+          </div>
+          <div class="legend-item">
+            <div class="legend-color units-color"></div>
+            <span>Units</span>
+          </div>
+        </div>
+        
+        <div class="chart-area">
+          @for (data of chartData; track data.month) {
+            <div class="chart-month">
+              <div class="chart-bars">
+                <div class="chart-bar orders-bar" [style.height.px]="data.orders * 10"></div>
+                <div class="chart-bar units-bar" [style.height.px]="data.units * 10"></div>
+              </div>
+              <span class="month-label">{{ data.month }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Side Content -->
+    <div class="content-right">
+      <!-- Waiting Actions -->
+      <div class="content-section waiting-actions">
+        <h4>Waiting Actions</h4>
+        <p>Lorem ipsum dolor sit amet consectetur adipiscing elit.</p>
+        
+        <div class="action-tabs">
+          <button class="action-tab active">
+            Orders
+            <span class="tab-badge">3</span>
+          </button>
+          <button class="action-tab">
+            Messages
+            <span class="tab-badge">1</span>
+          </button>
+        </div>
+
+        <div class="action-list">
+          @for (order of orders; track order.id) {
+            <div class="action-item">
+              <div class="action-details">
+                <div class="action-id">Order {{ order.id }}</div>
+                <div class="action-description">{{ order.product }}</div>
+              </div>
+              <div class="action-meta">
+                <span class="action-time">{{ order.date }}</span>
+                <button class="action-menu">⋯</button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- Sales by Category -->
+      <div class="content-section sales-section">
+        <h4>Sales by Category</h4>
+        <p>Categorized sales data</p>
+
+        <div class="sales-chart">
+          <div class="donut-chart">
+            <div class="donut-center">
+              <div class="donut-percentage">62%</div>
+              <div class="donut-label">Watches</div>
+            </div>
+          </div>
+          
+          <div class="sales-legend">
+            @for (item of salesData; track item.category) {
+              <div class="sales-item">
+                <div class="sales-color" [style.background-color]="item.color"></div>
+                <span class="sales-category">{{ item.category }}</span>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
