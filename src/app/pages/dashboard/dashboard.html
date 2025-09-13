@@ -70,15 +70,31 @@
       </div>
       
       <div class="chart-area">
-        @for (data of chartData; track data.month) {
-          <div class="chart-month">
-            <div class="chart-bars">
-              <div class="chart-bar orders-bar" [style.height.px]="data.orders * 10"></div>
-              <div class="chart-bar units-bar" [style.height.px]="data.units * 10"></div>
+        <!-- Chart Grid Lines -->
+        <div class="chart-grid">
+          <div class="grid-line" style="bottom: 0px;"></div>
+          <div class="grid-line" style="bottom: 40px;"></div>
+          <div class="grid-line" style="bottom: 80px;"></div>
+          <div class="grid-line" style="bottom: 120px;"></div>
+          <div class="grid-line" style="bottom: 160px;"></div>
+          <div class="grid-line" style="bottom: 200px;"></div>
+          <div class="grid-line" style="bottom: 240px;"></div>
+          <div class="grid-line" style="bottom: 280px;"></div>
+          <div class="grid-line" style="bottom: 320px;"></div>
+        </div>
+        
+        <!-- Chart Data -->
+        <div class="chart-data">
+          @for (data of chartData; track data.month) {
+            <div class="chart-month">
+              <div class="chart-bars">
+                <div class="chart-bar orders-bar" [style.height.px]="data.orders * 20"></div>
+                <div class="chart-bar units-bar" [style.height.px]="data.units * 20"></div>
+              </div>
+              <span class="month-label">{{ data.month }}</span>
             </div>
-            <span class="month-label">{{ data.month }}</span>
-          </div>
-        }
+          }
+        </div>
       </div>
     </div>
   </div>
