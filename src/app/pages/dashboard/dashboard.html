@@ -21,43 +21,12 @@
     <div class="section-header">
       <div class="section-info">
         <h3>Energy Dashboard</h3>
-        <p>Solar production and grid energy data - {{ currentDateDisplayText }}</p>
+        <p>Solar production and grid energy data monitoring system</p>
       </div>
       <div class="data-selector">
-        <select class="month-dropdown" (change)="onMonthChange($event)" [value]="currentMonth" [disabled]="isLoading" title="Select Month">
-          <option value="01">January</option>
-          <option value="02">February</option>
-          <option value="03">March</option>
-          <option value="04">April</option>
-          <option value="05">May</option>
-          <option value="06">June</option>
-          <option value="07">July</option>
-          <option value="08">August</option>
-          <option value="09">September</option>
-          <option value="10">October</option>
-          <option value="11">November</option>
-          <option value="12">December</option>
-        </select>
-        <select class="year-dropdown" (change)="onYearChange($event)" [value]="currentYear" [disabled]="isLoading" title="Select Year">
-          <option value="2020">2020</option>
-          <option value="2021">2021</option>
-          <option value="2022">2022</option>
-          <option value="2023">2023</option>
-          <option value="2024">2024</option>
-          <option value="2025">2025</option>
-          <option value="2026">2026</option>
-          <option value="2027">2027</option>
-          <option value="2028">2028</option>
-          <option value="2029">2029</option>
-          <option value="2030">2030</option>
-        </select>
         <button class="token-btn" (click)="changeToken()" [disabled]="isLoading" title="Change API Token">
           <i class="pi pi-key"></i>
           <span>Token</span>
-        </button>
-        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh All Data">
-          <i class="pi" [class.pi-refresh]="!isLoading" [class.pi-spin]="isLoading" [class.pi-spinner]="isLoading"></i>
-          <span>{{ isLoading ? 'Loading...' : 'Refresh All' }}</span>
         </button>
       </div>
     </div>
@@ -79,110 +48,139 @@
     }
   </div>
 
-  <!-- Inverter Chart Section -->
+    <!-- Daily Energy Data Section - Grouped Charts -->
   <div class="content-section energy-section">
     <div class="section-header">
       <div class="section-info">
-        <h3>☀️ Inverter Production</h3>
-        <p>Daily solar energy production from inverter</p>
+        <h3>📊 Daily Energy Data</h3>
+        <p>Daily solar production, grid energy flow, and plant efficiency metrics - {{ currentDateDisplayText }}</p>
       </div>
       <div class="data-selector">
-        <button class="refresh-btn" (click)="refreshInverterData()" [disabled]="isInverterLoading" title="Refresh Inverter Data">
-          <i class="pi" [class.pi-refresh]="!isInverterLoading" [class.pi-spin]="isInverterLoading" [class.pi-spinner]="isInverterLoading"></i>
-          <span>{{ isInverterLoading ? 'Loading...' : 'Refresh Inverter' }}</span>
+        <p-datepicker 
+          [(ngModel)]="selectedDate" 
+          (ngModelChange)="onDatePickerChange($event)"
+          view="month" 
+          dateFormat="mm/yy" 
+          [readonlyInput]="true"
+          [disabled]="isLoading"
+          placeholder="Select Month/Year"
+          class="month-year-picker"
+          [showIcon]="true"
+          iconDisplay="input"
+          title="Select Month and Year">
+        </p-datepicker>
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh All Daily Data">
+          <i class="pi" [class.pi-refresh]="!isLoading" [class.pi-spin]="isLoading" [class.pi-spinner]="isLoading"></i>
+          <span>{{ isLoading ? 'Loading...' : 'Refresh All' }}</span>
         </button>
       </div>
     </div>
 
-    <div class="chart-container-inner">
-      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
-        @if (inverterChartData.datasets && inverterChartData.datasets.length > 0) {
-          <canvas
-            baseChart
-            [data]="inverterChartData"
-            [options]="inverterChartOptions"
-            [type]="chartType"
-            width="800"
-            height="350"
-            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
-          </canvas>
-        } @else {
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
-            📊 Inverter data is being prepared...
-          </div>
-        }
+    <!-- Inverter Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>☀️ Solar Production</h4>
+          <p>Daily solar energy production from inverter</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshInverterData()" [disabled]="isInverterLoading" title="Refresh Inverter Data">
+            <i class="pi" [class.pi-refresh]="!isInverterLoading" [class.pi-spin]="isInverterLoading" [class.pi-spinner]="isInverterLoading"></i>
+            <span>{{ isInverterLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
       </div>
-    </div>
-  </div>
 
-  <!-- Meter Chart Section -->
-  <div class="content-section energy-section">
-    <div class="section-header">
-      <div class="section-info">
-        <h3>⚡ Meter Energy Data</h3>
-        <p>Grid energy import/export measurements</p>
-      </div>
-      <div class="data-selector">
-        <button class="refresh-btn" (click)="refreshMeterData()" [disabled]="isMeterLoading" title="Refresh Meter Data">
-          <i class="pi" [class.pi-refresh]="!isMeterLoading" [class.pi-spin]="isMeterLoading" [class.pi-spinner]="isMeterLoading"></i>
-          <span>{{ isMeterLoading ? 'Loading...' : 'Refresh Meter' }}</span>
-        </button>
-      </div>
-    </div>
-
-    <div class="chart-container-inner">
-      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
-        @if (meterChartData.datasets && meterChartData.datasets.length > 0) {
-          <canvas
-            baseChart
-            [data]="meterChartData"
-            [options]="meterChartOptions"
-            [type]="chartType"
-            width="800"
-            height="350"
-            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
-          </canvas>
-        } @else {
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
-            📊 Meter data is being prepared...
-          </div>
-        }
-      </div>
-    </div>
-  </div>
-
-  <!-- Plant Chart Section -->
-  <div class="content-section energy-section">
-    <div class="section-header">
-      <div class="section-info">
-        <h3>🌿 Plant Energy Overview</h3>
-        <p>Comprehensive plant energy flow and efficiency metrics</p>
-      </div>
-      <div class="data-selector">
-        <button class="refresh-btn" (click)="refreshPlantData()" [disabled]="isPlantLoading" title="Refresh Plant Data">
-          <i class="pi" [class.pi-refresh]="!isPlantLoading" [class.pi-spin]="isPlantLoading" [class.pi-spinner]="isPlantLoading"></i>
-          <span>{{ isPlantLoading ? 'Loading...' : 'Refresh Plant' }}</span>
-        </button>
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
+          @if (inverterChartData.datasets && inverterChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="inverterChartData"
+              [options]="inverterChartOptions"
+              [type]="chartType"
+              width="800"
+              height="300"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Inverter data is being prepared...
+            </div>
+          }
+        </div>
       </div>
     </div>
 
-    <div class="chart-container-inner">
-      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
-        @if (plantChartData.datasets && plantChartData.datasets.length > 0) {
-          <canvas
-            baseChart
-            [data]="plantChartData"
-            [options]="plantChartOptions"
-            [type]="chartType"
-            width="800"
-            height="350"
-            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
-          </canvas>
-        } @else {
-          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
-            📊 Plant data is being prepared...
-          </div>
-        }
+    <!-- Meter Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>⚡ Grid Energy Flow</h4>
+          <p>Daily grid energy import/export measurements</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshMeterData()" [disabled]="isMeterLoading" title="Refresh Meter Data">
+            <i class="pi" [class.pi-refresh]="!isMeterLoading" [class.pi-spin]="isMeterLoading" [class.pi-spinner]="isMeterLoading"></i>
+            <span>{{ isMeterLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
+          @if (meterChartData.datasets && meterChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="meterChartData"
+              [options]="meterChartOptions"
+              [type]="chartType"
+              width="800"
+              height="300"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Meter data is being prepared...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Plant Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>🌿 Plant Overview</h4>
+          <p>Daily plant energy flow and efficiency metrics</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshPlantData()" [disabled]="isPlantLoading" title="Refresh Plant Data">
+            <i class="pi" [class.pi-refresh]="!isPlantLoading" [class.pi-spin]="isPlantLoading" [class.pi-spinner]="isPlantLoading"></i>
+            <span>{{ isPlantLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
+          @if (plantChartData.datasets && plantChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="plantChartData"
+              [options]="plantChartOptions"
+              [type]="chartType"
+              width="800"
+              height="300"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Plant data is being prepared...
+            </div>
+          }
+        </div>
       </div>
     </div>
   </div>

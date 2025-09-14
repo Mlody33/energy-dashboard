@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartConfiguration, ChartOptions, ChartType, ChartData } from 'chart.js';
+import { DatePickerModule } from 'primeng/datepicker';
+import { FormsModule } from '@angular/forms';
 
 interface MetricCard {
   title: string;
@@ -50,7 +52,7 @@ interface DeviceResponse {
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, BaseChartDirective],
+  imports: [CommonModule, BaseChartDirective, DatePickerModule, FormsModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -73,6 +75,7 @@ export class Dashboard implements OnInit, AfterViewInit {
   // Date settings
   currentMonth: string = '09';
   currentYear: string = '2025';
+  selectedDate: Date = new Date(2025, 8); // September 2025 (month is 0-indexed)
   private readonly MONTH_STORAGE_KEY = 'global-home-month';
   private readonly YEAR_STORAGE_KEY = 'global-home-year';
 
@@ -622,6 +625,15 @@ export class Dashboard implements OnInit, AfterViewInit {
     if (savedYear) {
       this.currentYear = savedYear;
     }
+    
+    // Sync the selectedDate with the loaded month/year
+    this.syncSelectedDateWithMonthYear();
+  }
+
+  private syncSelectedDateWithMonthYear() {
+    const month = parseInt(this.currentMonth, 10) - 1; // Convert to 0-indexed month
+    const year = parseInt(this.currentYear, 10);
+    this.selectedDate = new Date(year, month);
   }
 
   private saveDateSettingsToStorage(month: string, year: string) {
@@ -1037,6 +1049,145 @@ export class Dashboard implements OnInit, AfterViewInit {
     ];
     const monthIndex = parseInt(this.currentMonth, 10) - 1;
     return `${monthNames[monthIndex]} ${this.currentYear}`;
+  }
+
+  onDatePickerChange(selectedDate: Date | null) {
+    if (selectedDate) {
+      this.selectedDate = selectedDate;
+      // Update the existing string properties to maintain compatibility
+      this.currentMonth = (selectedDate.getMonth() + 1).toString().padStart(2, '0');
+      this.currentYear = selectedDate.getFullYear().toString();
+      
+      // Save to storage
+      this.saveDateSettingsToStorage(this.currentMonth, this.currentYear);
+      
+      // Try to load stored data for the new month/year
+      this.loadDataForNewDate();
+    }
+  }
+
+  private loadDataForNewDate() {
+    const hasStoredInverterData = this.loadInverterDataFromStorage();
+    const hasStoredMeterData = this.loadMeterDataFromStorage();
+    const hasStoredPlantData = this.loadPlantDataFromStorage();
+    
+    // If no stored data, reset to fallback data and fill missing days
+    if (!hasStoredInverterData || !hasStoredMeterData || !hasStoredPlantData) {
+      this.loadFallbackDataForDate();
+    }
+    
+    this.updateAllCharts();
+    this.updateMetricCards();
+    console.log('📅 Date changed to:', this.currentDateDisplayText, '- Stored data available:', hasStoredInverterData && hasStoredMeterData && hasStoredPlantData);
+  }
+
+  private getOriginalInverterData(): EnergyData[] {
+    return [
+      { date: '2025-09-01', value: 30.74, day: '01' },
+      { date: '2025-09-02', value: 40.32, day: '02' },
+      { date: '2025-09-03', value: 28.73, day: '03' },
+      { date: '2025-09-04', value: 40.27, day: '04' },
+      { date: '2025-09-05', value: 28.65, day: '05' },
+      { date: '2025-09-06', value: 9.01, day: '06' },
+      { date: '2025-09-07', value: 17.19, day: '07' },
+      { date: '2025-09-08', value: 24.79, day: '08' },
+      { date: '2025-09-09', value: 49.28, day: '09' },
+      { date: '2025-09-10', value: 40.93, day: '10' },
+      { date: '2025-09-11', value: 23.37, day: '11' },
+      { date: '2025-09-12', value: 45.44, day: '12' },
+      { date: '2025-09-13', value: 34.57, day: '13' }
+    ];
+  }
+
+  private getOriginalMeterData(): MeterEnergyData[] {
+    return [
+      { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 0.0, importMain: 7.28, importTariff2: 7.74 },
+      { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 0.0, importMain: 5.37, importTariff2: 5.7 },
+      { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 0.0, importMain: 8.47, importTariff2: 7.52 },
+      { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 0.0, importMain: 7.49, importTariff2: 7.64 },
+      { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 0.0, importMain: 8.53, importTariff2: 6.17 },
+      { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.0, importMain: 15.51, importTariff2: 14.36 },
+      { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 0.0, importMain: 10.85, importTariff2: 11.09 },
+      { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 0.0, importMain: 9.48, importTariff2: 9.87 },
+      { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 0.0, importMain: 7.5, importTariff2: 6.83 },
+      { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 0.0, importMain: 8.42, importTariff2: 10.7 },
+      { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 0.0, importMain: 10.06, importTariff2: 7.78 },
+      { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 0.0, importMain: 5.4, importTariff2: 5.58 },
+      { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
+    ];
+  }
+
+  private getOriginalPlantData(): PlantData[] {
+    return [
+      { date: '2025-09-01', day: '01', totalProduction: 30.74, totalConsumption: 12.02, gridFeed: 26.0, gridConsumption: 7.28, selfConsumption: 4.74, selfSufficiency: 39.4 },
+      { date: '2025-09-02', day: '02', totalProduction: 40.32, totalConsumption: 11.07, gridFeed: 36.73, gridConsumption: 5.37, selfConsumption: 3.59, selfSufficiency: 32.4 },
+      { date: '2025-09-03', day: '03', totalProduction: 28.73, totalConsumption: 15.99, gridFeed: 24.05, gridConsumption: 8.47, selfConsumption: 4.68, selfSufficiency: 29.3 },
+      { date: '2025-09-04', day: '04', totalProduction: 40.27, totalConsumption: 15.13, gridFeed: 36.0, gridConsumption: 7.49, selfConsumption: 4.27, selfSufficiency: 28.2 },
+      { date: '2025-09-05', day: '05', totalProduction: 28.65, totalConsumption: 14.70, gridFeed: 27.16, gridConsumption: 8.53, selfConsumption: 1.49, selfSufficiency: 10.1 },
+      { date: '2025-09-06', day: '06', totalProduction: 9.01, totalConsumption: 29.87, gridFeed: 3.43, gridConsumption: 15.51, selfConsumption: 5.58, selfSufficiency: 18.7 },
+      { date: '2025-09-07', day: '07', totalProduction: 17.19, totalConsumption: 21.94, gridFeed: 9.96, gridConsumption: 10.85, selfConsumption: 7.23, selfSufficiency: 33.0 },
+      { date: '2025-09-08', day: '08', totalProduction: 24.79, totalConsumption: 19.35, gridFeed: 21.01, gridConsumption: 9.48, selfConsumption: 3.78, selfSufficiency: 19.5 },
+      { date: '2025-09-09', day: '09', totalProduction: 49.28, totalConsumption: 14.33, gridFeed: 45.92, gridConsumption: 7.50, selfConsumption: 3.36, selfSufficiency: 23.4 },
+      { date: '2025-09-10', day: '10', totalProduction: 40.93, totalConsumption: 19.12, gridFeed: 35.35, gridConsumption: 8.42, selfConsumption: 5.58, selfSufficiency: 29.2 },
+      { date: '2025-09-11', day: '11', totalProduction: 23.37, totalConsumption: 17.84, gridFeed: 18.85, gridConsumption: 10.06, selfConsumption: 4.52, selfSufficiency: 25.3 },
+      { date: '2025-09-12', day: '12', totalProduction: 45.44, totalConsumption: 10.98, gridFeed: 41.63, gridConsumption: 5.40, selfConsumption: 3.81, selfSufficiency: 34.7 },
+      { date: '2025-09-13', day: '13', totalProduction: 34.57, totalConsumption: 17.99, gridFeed: 25.78, gridConsumption: 8.22, selfConsumption: 8.79, selfSufficiency: 48.9 }
+    ];
+  }
+
+  private loadFallbackDataForDate() {
+    // Reset to original dummy data and fill for new date if no stored data
+    const isOriginalSampleMonth = this.currentMonth === '09' && this.currentYear === '2025';
+    
+    if (!this.loadInverterDataFromStorage()) {
+      this.inverterData = isOriginalSampleMonth ? this.getOriginalInverterData() : [];
+      this.inverterData = this.fillMissingDays(
+        this.inverterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          value: 0,
+          day: day.toString().padStart(2, '0')
+        })
+      );
+    }
+    
+    if (!this.loadMeterDataFromStorage()) {
+      this.meterData = isOriginalSampleMonth ? this.getOriginalMeterData() : [];
+      this.meterData = this.fillMissingDays(
+        this.meterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          day: day.toString().padStart(2, '0'),
+          exportMain: 0,
+          exportTariff2: 0,
+          importMain: 0,
+          importTariff2: 0
+        })
+      );
+    }
+    
+    if (!this.loadPlantDataFromStorage()) {
+      this.plantData = isOriginalSampleMonth ? this.getOriginalPlantData() : [];
+      this.plantData = this.fillMissingDays(
+        this.plantData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          day: day.toString().padStart(2, '0'),
+          totalProduction: 0,
+          totalConsumption: 0,
+          gridFeed: 0,
+          gridConsumption: 0,
+          selfConsumption: 0,
+          selfSufficiency: 0
+        })
+      );
+    }
   }
 
 
