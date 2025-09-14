@@ -61,6 +61,10 @@ export class Dashboard implements OnInit, AfterViewInit {
   currentYear: string = '2025';
   private readonly MONTH_STORAGE_KEY = 'global-home-month';
   private readonly YEAR_STORAGE_KEY = 'global-home-year';
+
+  // Data storage keys
+  private readonly INVERTER_DATA_KEY = 'global-home-inverter-data';
+  private readonly METER_DATA_KEY = 'global-home-meter-data';
   
   // API configuration - Direct calls (CORS will be handled by server)
   private readonly API_BASE = 'http://192.168.1.180:7070/metrics/device';
@@ -226,6 +230,43 @@ export class Dashboard implements OnInit, AfterViewInit {
     return 'kWh';
   }
 
+  private getDaysInMonth(month: string, year: string): number {
+    return new Date(parseInt(year), parseInt(month), 0).getDate();
+  }
+
+  private fillMissingDays<T extends { date: string; day: string }>(
+    data: T[], 
+    month: string, 
+    year: string,
+    createEmptyEntry: (day: number, dateStr: string) => T
+  ): T[] {
+    const daysInMonth = this.getDaysInMonth(month, year);
+    const result: T[] = [];
+    
+    // Create a map of existing data by day number
+    const existingData = new Map<number, T>();
+    data.forEach(item => {
+      const dayNum = parseInt(item.day);
+      if (dayNum >= 1 && dayNum <= daysInMonth) {
+        existingData.set(dayNum, item);
+      }
+    });
+    
+    // Fill all days in the month
+    for (let day = 1; day <= daysInMonth; day++) {
+      if (existingData.has(day)) {
+        result.push(existingData.get(day)!);
+      } else {
+        const dayStr = day.toString().padStart(2, '0');
+        const dateStr = `${year}-${month}-${dayStr}`;
+        result.push(createEmptyEntry(day, dateStr));
+      }
+    }
+    
+    console.log(`📅 Filled missing days: ${data.length} server days → ${result.length} total days (${daysInMonth} in ${month}/${year})`);
+    return result;
+  }
+
   // Line chart data point generators
   getInverterLinePoints(): string {
     return this.inverterData
@@ -346,25 +387,65 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   ngOnInit() {
     console.log('🔧 Dashboard ngOnInit started');
-    console.log('🔧 Sample data available:', {
-      inverter: this.inverterData.length,
-      meter: this.meterData.length
-    });
     
     this.loadTokenFromStorage();
     this.loadDateSettingsFromStorage();
     
-    // Initialize both charts with existing data
+    // Try to load stored data first
+    const hasStoredInverterData = this.loadInverterDataFromStorage();
+    const hasStoredMeterData = this.loadMeterDataFromStorage();
+    
+    if (!hasStoredInverterData || !hasStoredMeterData) {
+      console.log('📁 No stored data found or data is outdated, using fallback data');
+      
+      // Fill dummy data to complete month
+      if (!hasStoredInverterData) {
+        console.log('📊 Using dummy inverter data as fallback - filling to complete month');
+        this.inverterData = this.fillMissingDays(
+          this.inverterData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            value: 0,
+            day: day.toString().padStart(2, '0')
+          })
+        );
+      }
+      if (!hasStoredMeterData) {
+        console.log('📊 Using dummy meter data as fallback - filling to complete month');
+        this.meterData = this.fillMissingDays(
+          this.meterData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            day: day.toString().padStart(2, '0'),
+            exportMain: 0,
+            exportTariff2: 0,
+            importMain: 0,
+            importTariff2: 0
+          })
+        );
+      }
+    }
+    
+    console.log('🔧 Data loaded:', {
+      inverter: this.inverterData.length,
+      meter: this.meterData.length,
+      fromStorage: hasStoredInverterData && hasStoredMeterData
+    });
+    
+    // Initialize both charts with loaded data
     console.log('📊 Initializing chart data...');
     this.updateBothCharts();
+    this.updateMetricCards();
     
     // Force a second update after a delay
     setTimeout(() => {
       console.log('📊 Force updating chart data again...');
       this.updateBothCharts();
     }, 500);
-    
-    // Data will only be fetched when refresh button is clicked
   }
 
   ngAfterViewInit() {
@@ -424,6 +505,78 @@ export class Dashboard implements OnInit, AfterViewInit {
     this.currentYear = year;
   }
 
+  private saveInverterDataToStorage() {
+    try {
+      const dataToStore = {
+        data: this.inverterData,
+        timestamp: Date.now(),
+        month: this.currentMonth,
+        year: this.currentYear
+      };
+      localStorage.setItem(this.INVERTER_DATA_KEY, JSON.stringify(dataToStore));
+      console.log('💾 Inverter data saved to storage:', dataToStore.data.length, 'items');
+    } catch (error) {
+      console.error('❌ Failed to save inverter data to storage:', error);
+    }
+  }
+
+  private saveMeterDataToStorage() {
+    try {
+      const dataToStore = {
+        data: this.meterData,
+        timestamp: Date.now(),
+        month: this.currentMonth,
+        year: this.currentYear
+      };
+      localStorage.setItem(this.METER_DATA_KEY, JSON.stringify(dataToStore));
+      console.log('💾 Meter data saved to storage:', dataToStore.data.length, 'items');
+    } catch (error) {
+      console.error('❌ Failed to save meter data to storage:', error);
+    }
+  }
+
+  private loadInverterDataFromStorage(): boolean {
+    try {
+      const storedData = localStorage.getItem(this.INVERTER_DATA_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // Check if the data is for the current month/year
+        if (parsedData.month === this.currentMonth && parsedData.year === this.currentYear) {
+          this.inverterData = parsedData.data;
+          console.log('📁 Loaded inverter data from storage:', this.inverterData.length, 'items');
+          return true;
+        } else {
+          console.log('📁 Stored inverter data is for different month/year, ignoring');
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Failed to load inverter data from storage:', error);
+      return false;
+    }
+  }
+
+  private loadMeterDataFromStorage(): boolean {
+    try {
+      const storedData = localStorage.getItem(this.METER_DATA_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // Check if the data is for the current month/year
+        if (parsedData.month === this.currentMonth && parsedData.year === this.currentYear) {
+          this.meterData = parsedData.data;
+          console.log('📁 Loaded meter data from storage:', this.meterData.length, 'items');
+          return true;
+        } else {
+          console.log('📁 Stored meter data is for different month/year, ignoring');
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Failed to load meter data from storage:', error);
+      return false;
+    }
+  }
+
   private async promptForToken(): Promise<string> {
     return new Promise((resolve) => {
       const token = prompt(
@@ -451,8 +604,76 @@ export class Dashboard implements OnInit, AfterViewInit {
     const newMonth = target.value;
     this.currentMonth = newMonth;
     this.saveDateSettingsToStorage(newMonth, this.currentYear);
+    
+    // Try to load stored data for the new month/year
+    const hasStoredInverterData = this.loadInverterDataFromStorage();
+    const hasStoredMeterData = this.loadMeterDataFromStorage();
+    
+    // If no stored data, reset to dummy data and fill missing days
+    if (!hasStoredInverterData) {
+      // Reset to original dummy data and fill for new month
+      this.inverterData = [
+        { date: '2025-09-01', value: 30.74, day: '01' },
+        { date: '2025-09-02', value: 40.32, day: '02' },
+        { date: '2025-09-03', value: 28.73, day: '03' },
+        { date: '2025-09-04', value: 40.27, day: '04' },
+        { date: '2025-09-05', value: 28.65, day: '05' },
+        { date: '2025-09-06', value: 9.01, day: '06' },
+        { date: '2025-09-07', value: 17.19, day: '07' },
+        { date: '2025-09-08', value: 24.79, day: '08' },
+        { date: '2025-09-09', value: 49.28, day: '09' },
+        { date: '2025-09-10', value: 40.93, day: '10' },
+        { date: '2025-09-11', value: 23.37, day: '11' },
+        { date: '2025-09-12', value: 45.44, day: '12' },
+        { date: '2025-09-13', value: 34.57, day: '13' }
+      ];
+      this.inverterData = this.fillMissingDays(
+        this.inverterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          value: 0,
+          day: day.toString().padStart(2, '0')
+        })
+      );
+    }
+    
+    if (!hasStoredMeterData) {
+      // Reset to original dummy data and fill for new month
+      this.meterData = [
+        { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 0.0, importMain: 7.28, importTariff2: 7.74 },
+        { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 0.0, importMain: 5.37, importTariff2: 5.7 },
+        { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 0.0, importMain: 8.47, importTariff2: 7.52 },
+        { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 0.0, importMain: 7.49, importTariff2: 7.64 },
+        { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 0.0, importMain: 8.53, importTariff2: 6.17 },
+        { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.0, importMain: 15.51, importTariff2: 14.36 },
+        { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 0.0, importMain: 10.85, importTariff2: 11.09 },
+        { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 0.0, importMain: 9.48, importTariff2: 9.87 },
+        { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 0.0, importMain: 7.5, importTariff2: 6.83 },
+        { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 0.0, importMain: 8.42, importTariff2: 10.7 },
+        { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 0.0, importMain: 10.06, importTariff2: 7.78 },
+        { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 0.0, importMain: 5.4, importTariff2: 5.58 },
+        { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
+      ];
+      this.meterData = this.fillMissingDays(
+        this.meterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          day: day.toString().padStart(2, '0'),
+          exportMain: 0,
+          exportTariff2: 0,
+          importMain: 0,
+          importTariff2: 0
+        })
+      );
+    }
+    
     this.updateBothCharts();
-    console.log('📅 Month changed to:', this.currentMonth);
+    this.updateMetricCards();
+    console.log('📅 Month changed to:', this.currentMonth, '- Stored data available:', hasStoredInverterData && hasStoredMeterData);
   }
 
   onYearChange(event: Event) {
@@ -460,8 +681,76 @@ export class Dashboard implements OnInit, AfterViewInit {
     const newYear = target.value;
     this.currentYear = newYear;
     this.saveDateSettingsToStorage(this.currentMonth, newYear);
+    
+    // Try to load stored data for the new month/year
+    const hasStoredInverterData = this.loadInverterDataFromStorage();
+    const hasStoredMeterData = this.loadMeterDataFromStorage();
+    
+    // If no stored data, reset to dummy data and fill missing days
+    if (!hasStoredInverterData) {
+      // Reset to original dummy data and fill for new year
+      this.inverterData = [
+        { date: '2025-09-01', value: 30.74, day: '01' },
+        { date: '2025-09-02', value: 40.32, day: '02' },
+        { date: '2025-09-03', value: 28.73, day: '03' },
+        { date: '2025-09-04', value: 40.27, day: '04' },
+        { date: '2025-09-05', value: 28.65, day: '05' },
+        { date: '2025-09-06', value: 9.01, day: '06' },
+        { date: '2025-09-07', value: 17.19, day: '07' },
+        { date: '2025-09-08', value: 24.79, day: '08' },
+        { date: '2025-09-09', value: 49.28, day: '09' },
+        { date: '2025-09-10', value: 40.93, day: '10' },
+        { date: '2025-09-11', value: 23.37, day: '11' },
+        { date: '2025-09-12', value: 45.44, day: '12' },
+        { date: '2025-09-13', value: 34.57, day: '13' }
+      ];
+      this.inverterData = this.fillMissingDays(
+        this.inverterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          value: 0,
+          day: day.toString().padStart(2, '0')
+        })
+      );
+    }
+    
+    if (!hasStoredMeterData) {
+      // Reset to original dummy data and fill for new year
+      this.meterData = [
+        { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 0.0, importMain: 7.28, importTariff2: 7.74 },
+        { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 0.0, importMain: 5.37, importTariff2: 5.7 },
+        { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 0.0, importMain: 8.47, importTariff2: 7.52 },
+        { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 0.0, importMain: 7.49, importTariff2: 7.64 },
+        { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 0.0, importMain: 8.53, importTariff2: 6.17 },
+        { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.0, importMain: 15.51, importTariff2: 14.36 },
+        { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 0.0, importMain: 10.85, importTariff2: 11.09 },
+        { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 0.0, importMain: 9.48, importTariff2: 9.87 },
+        { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 0.0, importMain: 7.5, importTariff2: 6.83 },
+        { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 0.0, importMain: 8.42, importTariff2: 10.7 },
+        { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 0.0, importMain: 10.06, importTariff2: 7.78 },
+        { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 0.0, importMain: 5.4, importTariff2: 5.58 },
+        { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
+      ];
+      this.meterData = this.fillMissingDays(
+        this.meterData,
+        this.currentMonth,
+        this.currentYear,
+        (day: number, dateStr: string) => ({
+          date: dateStr,
+          day: day.toString().padStart(2, '0'),
+          exportMain: 0,
+          exportTariff2: 0,
+          importMain: 0,
+          importTariff2: 0
+        })
+      );
+    }
+    
     this.updateBothCharts();
-    console.log('📅 Year changed to:', this.currentYear);
+    this.updateMetricCards();
+    console.log('📅 Year changed to:', this.currentYear, '- Stored data available:', hasStoredInverterData && hasStoredMeterData);
   }
 
 
@@ -516,6 +805,11 @@ export class Dashboard implements OnInit, AfterViewInit {
         this.fetchInverterData(),
         this.fetchMeterData()
       ]);
+      
+      // Save fetched data to localStorage
+      this.saveInverterDataToStorage();
+      this.saveMeterDataToStorage();
+      
       this.updateMetricCards();
       this.updateBothCharts();
       console.log('✅ Data refresh completed successfully!');
@@ -612,7 +906,7 @@ export class Dashboard implements OnInit, AfterViewInit {
   }
 
   private transformInverterData(response: DeviceResponse): EnergyData[] {
-    return response.summary.map(item => {
+    const serverData = response.summary.map(item => {
       const date = new Date(item.date);
       const dayNumber = date.getDate().toString().padStart(2, '0');
       
@@ -625,10 +919,22 @@ export class Dashboard implements OnInit, AfterViewInit {
         day: dayNumber
       };
     });
+
+    // Fill missing days with zero values
+    return this.fillMissingDays(
+      serverData,
+      this.currentMonth,
+      this.currentYear,
+      (day: number, dateStr: string) => ({
+        date: dateStr,
+        value: 0,
+        day: day.toString().padStart(2, '0')
+      })
+    );
   }
 
   private transformMeterData(response: DeviceResponse): MeterEnergyData[] {
-    return response.summary.map(item => {
+    const serverData = response.summary.map(item => {
       const date = new Date(item.date);
       const dayNumber = date.getDate().toString().padStart(2, '0');
       
@@ -642,6 +948,21 @@ export class Dashboard implements OnInit, AfterViewInit {
         importTariff2: item.paramsSummary?.total_positive_energy_2_kwh_ || 0   // Single-phase import
       };
     });
+
+    // Fill missing days with zero values
+    return this.fillMissingDays(
+      serverData,
+      this.currentMonth,
+      this.currentYear,
+      (day: number, dateStr: string) => ({
+        date: dateStr,
+        day: day.toString().padStart(2, '0'),
+        exportMain: 0,
+        exportTariff2: 0,
+        importMain: 0,
+        importTariff2: 0
+      })
+    );
   }
 
   updateMetricCards() {
