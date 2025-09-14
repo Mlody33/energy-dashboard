@@ -6,6 +6,17 @@
 /* Import PrimeIcons */
 @import "primeicons/primeicons.css";
 
+/* Force CSS reload and Chart.js styles */
+canvas {
+  display: block !important;
+}
+
+/* Chart.js global styles */
+.chart-container canvas {
+  max-width: 100% !important;
+  height: auto !important;
+}
+
 /* Global Reset */
 * {
   margin: 0;

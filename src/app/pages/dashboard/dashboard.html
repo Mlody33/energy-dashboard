@@ -127,6 +127,34 @@
       </div>
     </div>
 
+    <!-- Interactive Chart Section -->
+    <div class="chart-container">
+      <h4 style="margin-bottom: 1rem; color: #374151; font-size: 1.1rem;">Energy Chart</h4>
+      
+      <!-- Debug info -->
+      <div style="margin-bottom: 1rem; padding: 0.5rem; background: #f3f4f6; border-radius: 4px; font-size: 0.75rem; color: #6b7280;">
+        Chart Type: {{ chartType }} | Data Points: {{ chartData.datasets.length > 0 ? chartData.datasets[0].data.length : 0 }} | Labels: {{ chartData.labels?.length }}
+      </div>
+      
+      <div class="chart-wrapper" style="height: 400px; width: 100%; border: 1px solid #e5e7eb; position: relative;">
+        @if (chartData.datasets && chartData.datasets.length > 0) {
+          <canvas
+            baseChart
+            [data]="chartData"
+            [options]="chartOptions"
+            [type]="chartType"
+            width="800"
+            height="400"
+            style="display: block !important; width: 100% !important; height: 100% !important;">
+          </canvas>
+        } @else {
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+            📊 Chart data is being prepared... ({{ chartData.datasets.length || 0 }} datasets)
+          </div>
+        }
+      </div>
+    </div>
+
   </div>
 
 </div>

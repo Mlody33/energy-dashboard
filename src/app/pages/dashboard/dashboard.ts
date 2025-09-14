@@ -1,6 +1,8 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject, ViewChild, AfterViewInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { BaseChartDirective } from 'ng2-charts';
+import { ChartConfiguration, ChartOptions, ChartType, ChartData } from 'chart.js';
 
 interface MetricCard {
   title: string;
@@ -39,12 +41,14 @@ type MeterDataType = 'exportMain' | 'exportTariff2' | 'importMain' | 'importTari
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule],
+  imports: [CommonModule, BaseChartDirective],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, AfterViewInit {
   private http = inject(HttpClient);
+  
+  @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
   
   selectedDataType: DataType = 'inverter';
   selectedMeterDataType: MeterDataType = 'exportMain';
@@ -117,20 +121,74 @@ export class Dashboard implements OnInit {
 
   // Complete meter data with all 4 energy types
   meterData: MeterEnergyData[] = [
-    { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 0.0, importMain: 7.28, importTariff2: 7.74 },
-    { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 0.0, importMain: 5.37, importTariff2: 5.7 },
-    { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 0.0, importMain: 8.47, importTariff2: 7.52 },
-    { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 0.0, importMain: 7.49, importTariff2: 7.64 },
-    { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 0.0, importMain: 8.53, importTariff2: 6.17 },
-    { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.0, importMain: 15.51, importTariff2: 14.36 },
-    { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 0.0, importMain: 10.85, importTariff2: 11.09 },
-    { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 0.0, importMain: 9.48, importTariff2: 9.87 },
-    { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 0.0, importMain: 7.5, importTariff2: 6.83 },
-    { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 0.0, importMain: 8.42, importTariff2: 10.7 },
-    { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 0.0, importMain: 10.06, importTariff2: 7.78 },
-    { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 0.0, importMain: 5.4, importTariff2: 5.58 },
-    { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
+    { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 4.2, importMain: 7.28, importTariff2: 7.74 },
+    { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 5.8, importMain: 5.37, importTariff2: 5.7 },
+    { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 3.1, importMain: 8.47, importTariff2: 7.52 },
+    { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 6.2, importMain: 7.49, importTariff2: 7.64 },
+    { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 3.8, importMain: 8.53, importTariff2: 6.17 },
+    { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.5, importMain: 15.51, importTariff2: 14.36 },
+    { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 1.2, importMain: 10.85, importTariff2: 11.09 },
+    { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 2.9, importMain: 9.48, importTariff2: 9.87 },
+    { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 7.3, importMain: 7.5, importTariff2: 6.83 },
+    { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 4.9, importMain: 8.42, importTariff2: 10.7 },
+    { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 2.1, importMain: 10.06, importTariff2: 7.78 },
+    { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 6.7, importMain: 5.4, importTariff2: 5.58 },
+    { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 3.4, importMain: 8.22, importTariff2: 9.77 }
   ];
+
+  // Chart configuration
+  public chartType = 'line' as const;
+  public chartData: ChartData<'line'> = {
+    labels: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13'],
+    datasets: [
+      {
+        label: 'Sample Data',
+        data: [30, 40, 28, 40, 28, 9, 17, 24, 49, 40, 23, 45, 34],
+        borderColor: 'rgb(16, 185, 129)',
+        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+        fill: true,
+        tension: 0.4
+      }
+    ]
+  };
+
+  public chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Energy Data'
+      },
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => `Date: ${context[0].label}`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Day of Month'
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Energy (kWh)'
+        }
+      }
+    }
+  };
 
   get currentChartData() {
     return this.selectedDataType === 'inverter' ? this.inverterData : this.meterData;
@@ -321,9 +379,44 @@ export class Dashboard implements OnInit {
   }
 
   ngOnInit() {
+    console.log('🔧 Dashboard ngOnInit started');
+    console.log('🔧 Sample data available:', {
+      inverter: this.inverterData.length,
+      meter: this.meterData.length
+    });
+    
     this.loadTokenFromStorage();
     this.loadDateSettingsFromStorage();
+    
+    // Initialize chart with existing data
+    console.log('📊 Initializing chart data...');
+    this.updateChartData();
+    console.log('📊 Chart data after initialization:', this.chartData);
+    
+    // Force a second update after a delay
+    setTimeout(() => {
+      console.log('📊 Force updating chart data again...');
+      this.updateChartData();
+      console.log('📊 Chart data after forced update:', this.chartData);
+    }, 500);
+    
     // Data will only be fetched when refresh button is clicked
+  }
+
+  ngAfterViewInit() {
+    console.log('🔧 Dashboard AfterViewInit - Chart reference:', this.chart);
+    
+    // Force chart update after view is initialized
+    setTimeout(() => {
+      console.log('🔧 Force updating chart after view init...');
+      this.updateChartData();
+      if (this.chart) {
+        this.chart.update();
+        console.log('✅ Chart update called');
+      } else {
+        console.warn('⚠️ Chart reference not found');
+      }
+    }, 100);
   }
 
   private loadTokenFromStorage() {
@@ -456,6 +549,7 @@ export class Dashboard implements OnInit {
         this.fetchMeterData()
       ]);
       this.updateMetricCards();
+      this.updateChartData();
       console.log('✅ Data refresh completed successfully!');
     } catch (error: any) {
       console.log('❌ Data refresh failed:', error);
@@ -587,6 +681,7 @@ export class Dashboard implements OnInit {
     const target = event.target as HTMLSelectElement;
     this.selectedDataType = target.value as DataType;
     this.updateMetricCards();
+    this.updateChartData();
   }
 
   updateMetricCards() {
@@ -664,5 +759,133 @@ export class Dashboard implements OnInit {
           }
         ];
       }
+  }
+
+  updateChartData() {
+    console.log('📊 updateChartData called for:', this.selectedDataType);
+    
+    if (this.selectedDataType === 'inverter') {
+      this.updateInverterChart();
+    } else {
+      this.updateMeterChart();
+    }
+    
+    // Force chart update if available
+    setTimeout(() => {
+      if (this.chart) {
+        console.log('🔄 Forcing chart update...');
+        this.chart.update();
+      }
+    }, 10);
+  }
+
+  private updateInverterChart() {
+    console.log('🔧 Updating inverter chart with data:', this.inverterData);
+    
+    const labels = this.inverterData.map(item => item.day);
+    const values = this.inverterData.map(item => item.value);
+    
+    console.log('📊 Chart labels:', labels);
+    console.log('📊 Chart values:', values);
+
+    this.chartData = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Inverter Production',
+          data: values,
+          borderColor: 'rgb(16, 185, 129)',
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(16, 185, 129)',
+          pointBorderColor: 'rgb(16, 185, 129)',
+          pointHoverBackgroundColor: 'rgb(5, 150, 105)',
+          pointHoverBorderColor: 'rgb(5, 150, 105)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3
+        }
+      ]
+    };
+
+    this.chartOptions.plugins!.title!.text = `Inverter Production - ${this.currentDateDisplayText}`;
+    console.log('✅ Chart data updated:', this.chartData);
+  }
+
+  private updateMeterChart() {
+    console.log('🔧 Updating meter chart with data:', this.meterData);
+    
+    const labels = this.meterData.map(item => item.day);
+    console.log('📊 Meter chart labels:', labels);
+
+    this.chartData = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Export Main (Grid Feed-in)',
+          data: this.meterData.map(item => item.exportMain),
+          borderColor: 'rgb(34, 197, 94)', // Green for export
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(34, 197, 94)',
+          pointBorderColor: 'rgb(34, 197, 94)',
+          pointHoverBackgroundColor: 'rgb(22, 163, 74)',
+          pointHoverBorderColor: 'rgb(22, 163, 74)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3
+        },
+        {
+          label: 'Export Tariff 2 (Off-Peak Export)',
+          data: this.meterData.map(item => item.exportTariff2),
+          borderColor: 'rgb(132, 204, 22)', // Light green for export tariff 2
+          backgroundColor: 'rgba(132, 204, 22, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(132, 204, 22)',
+          pointBorderColor: 'rgb(132, 204, 22)',
+          pointHoverBackgroundColor: 'rgb(101, 163, 13)',
+          pointHoverBorderColor: 'rgb(101, 163, 13)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3
+        },
+        {
+          label: 'Import Main (Grid Consumption)',
+          data: this.meterData.map(item => item.importMain),
+          borderColor: 'rgb(239, 68, 68)', // Red for import
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(239, 68, 68)',
+          pointBorderColor: 'rgb(239, 68, 68)',
+          pointHoverBackgroundColor: 'rgb(220, 38, 38)',
+          pointHoverBorderColor: 'rgb(220, 38, 38)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3
+        },
+        {
+          label: 'Import Tariff 2 (Off-Peak Import)',
+          data: this.meterData.map(item => item.importTariff2),
+          borderColor: 'rgb(249, 115, 22)', // Orange for import tariff 2
+          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(249, 115, 22)',
+          pointBorderColor: 'rgb(249, 115, 22)',
+          pointHoverBackgroundColor: 'rgb(234, 88, 12)',
+          pointHoverBorderColor: 'rgb(234, 88, 12)',
+          pointRadius: 4,
+          pointHoverRadius: 6,
+          borderWidth: 3
+        }
+      ]
+    };
+
+    this.chartOptions.plugins!.title!.text = `Meter Energy Data - ${this.currentDateDisplayText}`;
+    console.log('✅ Meter chart data updated with all 4 data types:', this.chartData);
   }
 }

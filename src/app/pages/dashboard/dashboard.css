@@ -254,13 +254,42 @@
   font-weight: 600;
 }
 
+/* Chart Container Styles */
 .chart-container {
-  border-top: 1px solid #e2e8f0;
-  padding-top: 1rem;
-  background: #fafafa;
-  border-radius: 12px;
+  margin-top: 2rem;
   padding: 1.5rem;
+  background: white;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+  min-height: 500px; /* Ensure minimum height */
 }
+
+.chart-wrapper {
+  position: relative;
+  height: 400px;
+  width: 100%;
+  display: block; /* Ensure display */
+}
+
+.chart-wrapper canvas {
+  border-radius: 8px;
+  display: block !important; /* Force canvas display */
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Responsive chart sizing */
+@media (max-width: 768px) {
+  .chart-wrapper {
+    height: 300px;
+  }
+  
+  .chart-container {
+    padding: 1rem;
+    margin-top: 1.5rem;
+  }
+}
+
 
 .chart-legend {
   display: flex;
