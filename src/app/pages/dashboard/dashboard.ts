@@ -21,10 +21,10 @@ interface EnergyData {
 interface MeterEnergyData {
   date: string;
   day: string;
-  exportMain: number;      // total_negative_energy_kwh_
-  exportTariff2: number;   // total_negative_energy_2_kwh_
-  importMain: number;      // total_positive_energy_kwh_
-  importTariff2: number;   // total_positive_energy_2_kwh_
+  exportMain: number;      // total_negative_energy_kwh_ - Export energy for whole home (all phases)
+  exportTariff2: number;   // total_negative_energy_2_kwh_ - Export energy for single-phase devices
+  importMain: number;      // total_positive_energy_kwh_ - Import energy for whole home (all phases)
+  importTariff2: number;   // total_positive_energy_2_kwh_ - Import energy for single-phase devices
 }
 
 interface DeviceResponse {
@@ -665,14 +665,13 @@ export class Dashboard implements OnInit, AfterViewInit {
       const dayNumber = date.getDate().toString().padStart(2, '0');
       
       // Transform API response to match MeterEnergyData interface
-      // Adjust these property names based on actual API response structure
       return {
         date: item.date,
         day: dayNumber,
-        exportMain: item.paramsSummary?.total_negative_energy_kwh_ || 0,
-        exportTariff2: item.paramsSummary?.total_negative_energy_2_kwh_ || 0,
-        importMain: item.paramsSummary?.total_positive_energy_kwh_ || 0,
-        importTariff2: item.paramsSummary?.total_positive_energy_2_kwh_ || 0
+        exportMain: item.paramsSummary?.total_negative_energy_kwh_ || 0,       // Whole home export (all phases)
+        exportTariff2: item.paramsSummary?.total_negative_energy_2_kwh_ || 0,  // Single-phase export
+        importMain: item.paramsSummary?.total_positive_energy_kwh_ || 0,       // Whole home import (all phases)
+        importTariff2: item.paramsSummary?.total_positive_energy_2_kwh_ || 0   // Single-phase import
       };
     });
   }
@@ -802,8 +801,8 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointBorderColor: 'rgb(16, 185, 129)',
           pointHoverBackgroundColor: 'rgb(5, 150, 105)',
           pointHoverBorderColor: 'rgb(5, 150, 105)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 2,
+          pointHoverRadius: 4,
           borderWidth: 3
         }
       ]
@@ -823,7 +822,7 @@ export class Dashboard implements OnInit, AfterViewInit {
       labels: labels,
       datasets: [
         {
-          label: 'Export Main (Grid Feed-in)',
+          label: 'Export Whole Home (All Phases)',
           data: this.meterData.map(item => item.exportMain),
           borderColor: 'rgb(34, 197, 94)', // Green for export
           backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -833,14 +832,14 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointBorderColor: 'rgb(34, 197, 94)',
           pointHoverBackgroundColor: 'rgb(22, 163, 74)',
           pointHoverBorderColor: 'rgb(22, 163, 74)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 2,
+          pointHoverRadius: 4,
           borderWidth: 3
         },
         {
-          label: 'Export Tariff 2 (Off-Peak Export)',
+          label: 'Export Single Phase',
           data: this.meterData.map(item => item.exportTariff2),
-          borderColor: 'rgb(132, 204, 22)', // Light green for export tariff 2
+          borderColor: 'rgb(132, 204, 22)', // Light green for single phase export
           backgroundColor: 'rgba(132, 204, 22, 0.1)',
           fill: true,
           tension: 0.4,
@@ -848,12 +847,13 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointBorderColor: 'rgb(132, 204, 22)',
           pointHoverBackgroundColor: 'rgb(101, 163, 13)',
           pointHoverBorderColor: 'rgb(101, 163, 13)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          borderWidth: 3
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,
+          borderDash: [5, 5] // Dashed line for single phase
         },
         {
-          label: 'Import Main (Grid Consumption)',
+          label: 'Import Whole Home (All Phases)',
           data: this.meterData.map(item => item.importMain),
           borderColor: 'rgb(239, 68, 68)', // Red for import
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -863,14 +863,14 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointBorderColor: 'rgb(239, 68, 68)',
           pointHoverBackgroundColor: 'rgb(220, 38, 38)',
           pointHoverBorderColor: 'rgb(220, 38, 38)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
+          pointRadius: 2,
+          pointHoverRadius: 4,
           borderWidth: 3
         },
         {
-          label: 'Import Tariff 2 (Off-Peak Import)',
+          label: 'Import Single Phase',
           data: this.meterData.map(item => item.importTariff2),
-          borderColor: 'rgb(249, 115, 22)', // Orange for import tariff 2
+          borderColor: 'rgb(249, 115, 22)', // Orange for single phase import
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
           fill: true,
           tension: 0.4,
@@ -878,9 +878,10 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointBorderColor: 'rgb(249, 115, 22)',
           pointHoverBackgroundColor: 'rgb(234, 88, 12)',
           pointHoverBorderColor: 'rgb(234, 88, 12)',
-          pointRadius: 4,
-          pointHoverRadius: 6,
-          borderWidth: 3
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,
+          borderDash: [5, 5] // Dashed line for single phase
         }
       ]
     };
