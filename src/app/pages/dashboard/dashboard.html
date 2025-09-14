@@ -54,6 +54,12 @@
       <div class="section-info">
         <h3>📊 Daily Energy Data</h3>
         <p>Daily solar production, grid energy flow, and plant efficiency metrics - {{ currentDateDisplayText }}</p>
+        @if (showRefreshReminder) {
+          <div class="refresh-reminder">
+            <i class="pi pi-exclamation-triangle" style="color: #f59e0b; margin-right: 6px;"></i>
+            <span style="color: #f59e0b; font-size: 0.875rem; font-weight: 500;">Data may not match selected month - Click refresh to update charts</span>
+          </div>
+        }
       </div>
       <div class="data-selector">
         <p-datepicker 

@@ -748,3 +748,24 @@
     gap: 0.75rem;
   }
 }
+
+/* Refresh Reminder Styles */
+.refresh-reminder {
+  display: flex;
+  align-items: center;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background-color: #fffbeb;
+  border: 1px solid #fed7aa;
+  border-radius: 6px;
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
