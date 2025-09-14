@@ -55,9 +55,9 @@
           <i class="pi pi-key"></i>
           <span>Token</span>
         </button>
-        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh Data">
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh All Data">
           <i class="pi" [class.pi-refresh]="!isLoading" [class.pi-spin]="isLoading" [class.pi-spinner]="isLoading"></i>
-          <span>{{ isLoading ? 'Loading...' : 'Refresh' }}</span>
+          <span>{{ isLoading ? 'Loading...' : 'Refresh All' }}</span>
         </button>
       </div>
     </div>
@@ -85,6 +85,12 @@
       <div class="section-info">
         <h3>☀️ Inverter Production</h3>
         <p>Daily solar energy production from inverter</p>
+      </div>
+      <div class="data-selector">
+        <button class="refresh-btn" (click)="refreshInverterData()" [disabled]="isInverterLoading" title="Refresh Inverter Data">
+          <i class="pi" [class.pi-refresh]="!isInverterLoading" [class.pi-spin]="isInverterLoading" [class.pi-spinner]="isInverterLoading"></i>
+          <span>{{ isInverterLoading ? 'Loading...' : 'Refresh Inverter' }}</span>
+        </button>
       </div>
     </div>
 
@@ -116,6 +122,12 @@
         <h3>⚡ Meter Energy Data</h3>
         <p>Grid energy import/export measurements</p>
       </div>
+      <div class="data-selector">
+        <button class="refresh-btn" (click)="refreshMeterData()" [disabled]="isMeterLoading" title="Refresh Meter Data">
+          <i class="pi" [class.pi-refresh]="!isMeterLoading" [class.pi-spin]="isMeterLoading" [class.pi-spinner]="isMeterLoading"></i>
+          <span>{{ isMeterLoading ? 'Loading...' : 'Refresh Meter' }}</span>
+        </button>
+      </div>
     </div>
 
     <div class="chart-container-inner">
@@ -133,6 +145,42 @@
         } @else {
           <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
             📊 Meter data is being prepared...
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+
+  <!-- Plant Chart Section -->
+  <div class="content-section energy-section">
+    <div class="section-header">
+      <div class="section-info">
+        <h3>🌿 Plant Energy Overview</h3>
+        <p>Comprehensive plant energy flow and efficiency metrics</p>
+      </div>
+      <div class="data-selector">
+        <button class="refresh-btn" (click)="refreshPlantData()" [disabled]="isPlantLoading" title="Refresh Plant Data">
+          <i class="pi" [class.pi-refresh]="!isPlantLoading" [class.pi-spin]="isPlantLoading" [class.pi-spinner]="isPlantLoading"></i>
+          <span>{{ isPlantLoading ? 'Loading...' : 'Refresh Plant' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="chart-container-inner">
+      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
+        @if (plantChartData.datasets && plantChartData.datasets.length > 0) {
+          <canvas
+            baseChart
+            [data]="plantChartData"
+            [options]="plantChartOptions"
+            [type]="chartType"
+            width="800"
+            height="350"
+            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+          </canvas>
+        } @else {
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+            📊 Plant data is being prepared...
           </div>
         }
       </div>

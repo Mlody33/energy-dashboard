@@ -27,6 +27,17 @@ interface MeterEnergyData {
   importTariff2: number;   // total_positive_energy_2_kwh_ - Import energy for single-phase devices
 }
 
+interface PlantData {
+  date: string;
+  day: string;
+  totalProduction: number;  // Total plant production
+  totalConsumption: number; // Total plant consumption  
+  gridFeed: number;        // Grid feed-in
+  gridConsumption: number; // Grid consumption
+  selfConsumption: number; // Self consumption
+  selfSufficiency: number; // Self sufficiency percentage
+}
+
 interface DeviceResponse {
   deviceName: string;
   summary: Array<{
@@ -50,6 +61,9 @@ export class Dashboard implements OnInit, AfterViewInit {
   
   // Loading and API state
   isLoading: boolean = false;
+  isInverterLoading: boolean = false;
+  isMeterLoading: boolean = false;
+  isPlantLoading: boolean = false;
   errorMessage: string = '';
   
   // Token management
@@ -65,6 +79,7 @@ export class Dashboard implements OnInit, AfterViewInit {
   // Data storage keys
   private readonly INVERTER_DATA_KEY = 'global-home-inverter-data';
   private readonly METER_DATA_KEY = 'global-home-meter-data';
+  private readonly PLANT_DATA_KEY = 'global-home-plant-data';
   
   // API configuration - Direct calls (CORS will be handled by server)
   private readonly API_BASE = 'http://192.168.1.180:7070/metrics/device';
@@ -135,6 +150,23 @@ export class Dashboard implements OnInit, AfterViewInit {
     { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
   ];
 
+  // Sample plant data - comprehensive energy flow metrics
+  plantData: PlantData[] = [
+    { date: '2025-09-01', day: '01', totalProduction: 30.74, totalConsumption: 12.02, gridFeed: 26.0, gridConsumption: 7.28, selfConsumption: 4.74, selfSufficiency: 39.4 },
+    { date: '2025-09-02', day: '02', totalProduction: 40.32, totalConsumption: 11.07, gridFeed: 36.73, gridConsumption: 5.37, selfConsumption: 3.59, selfSufficiency: 32.4 },
+    { date: '2025-09-03', day: '03', totalProduction: 28.73, totalConsumption: 15.99, gridFeed: 24.05, gridConsumption: 8.47, selfConsumption: 4.68, selfSufficiency: 29.3 },
+    { date: '2025-09-04', day: '04', totalProduction: 40.27, totalConsumption: 15.13, gridFeed: 36.0, gridConsumption: 7.49, selfConsumption: 4.27, selfSufficiency: 28.2 },
+    { date: '2025-09-05', day: '05', totalProduction: 28.65, totalConsumption: 14.70, gridFeed: 27.16, gridConsumption: 8.53, selfConsumption: 1.49, selfSufficiency: 10.1 },
+    { date: '2025-09-06', day: '06', totalProduction: 9.01, totalConsumption: 29.87, gridFeed: 3.43, gridConsumption: 15.51, selfConsumption: 5.58, selfSufficiency: 18.7 },
+    { date: '2025-09-07', day: '07', totalProduction: 17.19, totalConsumption: 21.94, gridFeed: 9.96, gridConsumption: 10.85, selfConsumption: 7.23, selfSufficiency: 33.0 },
+    { date: '2025-09-08', day: '08', totalProduction: 24.79, totalConsumption: 19.35, gridFeed: 21.01, gridConsumption: 9.48, selfConsumption: 3.78, selfSufficiency: 19.5 },
+    { date: '2025-09-09', day: '09', totalProduction: 49.28, totalConsumption: 14.33, gridFeed: 45.92, gridConsumption: 7.50, selfConsumption: 3.36, selfSufficiency: 23.4 },
+    { date: '2025-09-10', day: '10', totalProduction: 40.93, totalConsumption: 19.12, gridFeed: 35.35, gridConsumption: 8.42, selfConsumption: 5.58, selfSufficiency: 29.2 },
+    { date: '2025-09-11', day: '11', totalProduction: 23.37, totalConsumption: 17.84, gridFeed: 18.85, gridConsumption: 10.06, selfConsumption: 4.52, selfSufficiency: 25.3 },
+    { date: '2025-09-12', day: '12', totalProduction: 45.44, totalConsumption: 10.98, gridFeed: 41.63, gridConsumption: 5.40, selfConsumption: 3.81, selfSufficiency: 34.7 },
+    { date: '2025-09-13', day: '13', totalProduction: 34.57, totalConsumption: 17.99, gridFeed: 25.78, gridConsumption: 8.22, selfConsumption: 8.79, selfSufficiency: 48.9 }
+  ];
+
   // Chart configuration
   public chartType = 'line' as const;
   
@@ -195,6 +227,50 @@ export class Dashboard implements OnInit, AfterViewInit {
       title: {
         display: true,
         text: 'Grid Energy Flow'
+      },
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => `Date: ${context[0].label}`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Day of Month'
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Energy (kWh)'
+        }
+      }
+    }
+  };
+
+  // Plant Chart Data
+  public plantChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
+  };
+
+  public plantChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Plant Energy Overview'
       },
       legend: {
         display: true,
@@ -394,8 +470,9 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Try to load stored data first
     const hasStoredInverterData = this.loadInverterDataFromStorage();
     const hasStoredMeterData = this.loadMeterDataFromStorage();
+    const hasStoredPlantData = this.loadPlantDataFromStorage();
     
-    if (!hasStoredInverterData || !hasStoredMeterData) {
+    if (!hasStoredInverterData || !hasStoredMeterData || !hasStoredPlantData) {
       console.log('📁 No stored data found or data is outdated, using fallback data');
       
       // Fill dummy data to complete month
@@ -428,23 +505,72 @@ export class Dashboard implements OnInit, AfterViewInit {
           })
         );
       }
+      if (!hasStoredPlantData) {
+        console.log('📊 Using sample plant data as fallback - filling to complete month');
+        // For September 2025, use the sample data and fill missing days with zeros
+        if (this.currentMonth === '09' && this.currentYear === '2025') {
+          this.plantData = this.fillMissingDays(
+            this.plantData, // This contains the sample data with real values
+            this.currentMonth,
+            this.currentYear,
+            (day: number, dateStr: string) => ({
+              date: dateStr,
+              day: day.toString().padStart(2, '0'),
+              totalProduction: 0,
+              totalConsumption: 0,
+              gridFeed: 0,
+              gridConsumption: 0,
+              selfConsumption: 0,
+              selfSufficiency: 0
+            })
+          );
+        } else {
+          // For other months/years, create all zero data
+          this.plantData = [];
+          this.plantData = this.fillMissingDays(
+            this.plantData,
+            this.currentMonth,
+            this.currentYear,
+            (day: number, dateStr: string) => ({
+              date: dateStr,
+              day: day.toString().padStart(2, '0'),
+              totalProduction: 0,
+              totalConsumption: 0,
+              gridFeed: 0,
+              gridConsumption: 0,
+              selfConsumption: 0,
+              selfSufficiency: 0
+            })
+          );
+        }
+        console.log('📊 Plant data after filling:', {
+          dataCount: this.plantData.length,
+          firstEntry: this.plantData[0],
+          sampleValues: this.plantData.slice(0, 3).map(d => ({
+            day: d.day,
+            production: d.totalProduction,
+            consumption: d.totalConsumption
+          }))
+        });
+      }
     }
     
     console.log('🔧 Data loaded:', {
       inverter: this.inverterData.length,
       meter: this.meterData.length,
-      fromStorage: hasStoredInverterData && hasStoredMeterData
+      plant: this.plantData.length,
+      fromStorage: hasStoredInverterData && hasStoredMeterData && hasStoredPlantData
     });
     
-    // Initialize both charts with loaded data
+    // Initialize all charts with loaded data
     console.log('📊 Initializing chart data...');
-    this.updateBothCharts();
+    this.updateAllCharts();
     this.updateMetricCards();
     
     // Force a second update after a delay
     setTimeout(() => {
       console.log('📊 Force updating chart data again...');
-      this.updateBothCharts();
+      this.updateAllCharts();
     }, 500);
   }
 
@@ -454,7 +580,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Force chart update after view is initialized
     setTimeout(() => {
       console.log('🔧 Force updating charts after view init...');
-      this.updateBothCharts();
+      this.updateAllCharts();
       if (this.chart) {
         this.chart.update();
         console.log('✅ Chart update called');
@@ -535,6 +661,21 @@ export class Dashboard implements OnInit, AfterViewInit {
     }
   }
 
+  private savePlantDataToStorage() {
+    try {
+      const dataToStore = {
+        data: this.plantData,
+        timestamp: Date.now(),
+        month: this.currentMonth,
+        year: this.currentYear
+      };
+      localStorage.setItem(this.PLANT_DATA_KEY, JSON.stringify(dataToStore));
+      console.log('💾 Plant data saved to storage:', dataToStore.data.length, 'items');
+    } catch (error) {
+      console.error('❌ Failed to save plant data to storage:', error);
+    }
+  }
+
   private loadInverterDataFromStorage(): boolean {
     try {
       const storedData = localStorage.getItem(this.INVERTER_DATA_KEY);
@@ -577,6 +718,27 @@ export class Dashboard implements OnInit, AfterViewInit {
     }
   }
 
+  private loadPlantDataFromStorage(): boolean {
+    try {
+      const storedData = localStorage.getItem(this.PLANT_DATA_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        // Check if the data is for the current month/year
+        if (parsedData.month === this.currentMonth && parsedData.year === this.currentYear) {
+          this.plantData = parsedData.data;
+          console.log('📁 Loaded plant data from storage:', this.plantData.length, 'items');
+          return true;
+        } else {
+          console.log('📁 Stored plant data is for different month/year, ignoring');
+        }
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Failed to load plant data from storage:', error);
+      return false;
+    }
+  }
+
   private async promptForToken(): Promise<string> {
     return new Promise((resolve) => {
       const token = prompt(
@@ -608,6 +770,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Try to load stored data for the new month/year
     const hasStoredInverterData = this.loadInverterDataFromStorage();
     const hasStoredMeterData = this.loadMeterDataFromStorage();
+    const hasStoredPlantData = this.loadPlantDataFromStorage();
     
     // If no stored data, reset to dummy data and fill missing days
     if (!hasStoredInverterData) {
@@ -668,12 +831,68 @@ export class Dashboard implements OnInit, AfterViewInit {
           importMain: 0,
           importTariff2: 0
         })
-      );
+        );
     }
     
-    this.updateBothCharts();
+    if (!hasStoredPlantData) {
+      // For months other than September 2025, reset to zeros since we only have sample data for Sept 2025
+      if (this.currentMonth === '09' && this.currentYear === '2025') {
+        // Keep the original sample data for September 2025
+        this.plantData = [
+          { date: '2025-09-01', day: '01', totalProduction: 30.74, totalConsumption: 12.02, gridFeed: 26.0, gridConsumption: 7.28, selfConsumption: 4.74, selfSufficiency: 39.4 },
+          { date: '2025-09-02', day: '02', totalProduction: 40.32, totalConsumption: 11.07, gridFeed: 36.73, gridConsumption: 5.37, selfConsumption: 3.59, selfSufficiency: 32.4 },
+          { date: '2025-09-03', day: '03', totalProduction: 28.73, totalConsumption: 15.99, gridFeed: 24.05, gridConsumption: 8.47, selfConsumption: 4.68, selfSufficiency: 29.3 },
+          { date: '2025-09-04', day: '04', totalProduction: 40.27, totalConsumption: 15.13, gridFeed: 36.0, gridConsumption: 7.49, selfConsumption: 4.27, selfSufficiency: 28.2 },
+          { date: '2025-09-05', day: '05', totalProduction: 28.65, totalConsumption: 14.70, gridFeed: 27.16, gridConsumption: 8.53, selfConsumption: 1.49, selfSufficiency: 10.1 },
+          { date: '2025-09-06', day: '06', totalProduction: 9.01, totalConsumption: 29.87, gridFeed: 3.43, gridConsumption: 15.51, selfConsumption: 5.58, selfSufficiency: 18.7 },
+          { date: '2025-09-07', day: '07', totalProduction: 17.19, totalConsumption: 21.94, gridFeed: 9.96, gridConsumption: 10.85, selfConsumption: 7.23, selfSufficiency: 33.0 },
+          { date: '2025-09-08', day: '08', totalProduction: 24.79, totalConsumption: 19.35, gridFeed: 21.01, gridConsumption: 9.48, selfConsumption: 3.78, selfSufficiency: 19.5 },
+          { date: '2025-09-09', day: '09', totalProduction: 49.28, totalConsumption: 14.33, gridFeed: 45.92, gridConsumption: 7.50, selfConsumption: 3.36, selfSufficiency: 23.4 },
+          { date: '2025-09-10', day: '10', totalProduction: 40.93, totalConsumption: 19.12, gridFeed: 35.35, gridConsumption: 8.42, selfConsumption: 5.58, selfSufficiency: 29.2 },
+          { date: '2025-09-11', day: '11', totalProduction: 23.37, totalConsumption: 17.84, gridFeed: 18.85, gridConsumption: 10.06, selfConsumption: 4.52, selfSufficiency: 25.3 },
+          { date: '2025-09-12', day: '12', totalProduction: 45.44, totalConsumption: 10.98, gridFeed: 41.63, gridConsumption: 5.40, selfConsumption: 3.81, selfSufficiency: 34.7 },
+          { date: '2025-09-13', day: '13', totalProduction: 34.57, totalConsumption: 17.99, gridFeed: 25.78, gridConsumption: 8.22, selfConsumption: 8.79, selfSufficiency: 48.9 }
+        ];
+        // Fill the rest of September with zeros
+        this.plantData = this.fillMissingDays(
+          this.plantData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            day: day.toString().padStart(2, '0'),
+            totalProduction: 0,
+            totalConsumption: 0,
+            gridFeed: 0,
+            gridConsumption: 0,
+            selfConsumption: 0,
+            selfSufficiency: 0
+          })
+        );
+      } else {
+        // For other months/years, create all zero data
+        this.plantData = [];
+        this.plantData = this.fillMissingDays(
+          this.plantData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            day: day.toString().padStart(2, '0'),
+            totalProduction: 0,
+            totalConsumption: 0,
+            gridFeed: 0,
+            gridConsumption: 0,
+            selfConsumption: 0,
+            selfSufficiency: 0
+          })
+        );
+      }
+    }
+    
+    this.updateAllCharts();
     this.updateMetricCards();
-    console.log('📅 Month changed to:', this.currentMonth, '- Stored data available:', hasStoredInverterData && hasStoredMeterData);
+    console.log('📅 Month changed to:', this.currentMonth, '- Stored data available:', hasStoredInverterData && hasStoredMeterData && hasStoredPlantData);
   }
 
   onYearChange(event: Event) {
@@ -685,6 +904,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Try to load stored data for the new month/year
     const hasStoredInverterData = this.loadInverterDataFromStorage();
     const hasStoredMeterData = this.loadMeterDataFromStorage();
+    const hasStoredPlantData = this.loadPlantDataFromStorage();
     
     // If no stored data, reset to dummy data and fill missing days
     if (!hasStoredInverterData) {
@@ -745,12 +965,68 @@ export class Dashboard implements OnInit, AfterViewInit {
           importMain: 0,
           importTariff2: 0
         })
-      );
+        );
     }
     
-    this.updateBothCharts();
+    if (!hasStoredPlantData) {
+      // For months other than September 2025, reset to zeros since we only have sample data for Sept 2025
+      if (this.currentMonth === '09' && this.currentYear === '2025') {
+        // Keep the original sample data for September 2025
+        this.plantData = [
+          { date: '2025-09-01', day: '01', totalProduction: 30.74, totalConsumption: 12.02, gridFeed: 26.0, gridConsumption: 7.28, selfConsumption: 4.74, selfSufficiency: 39.4 },
+          { date: '2025-09-02', day: '02', totalProduction: 40.32, totalConsumption: 11.07, gridFeed: 36.73, gridConsumption: 5.37, selfConsumption: 3.59, selfSufficiency: 32.4 },
+          { date: '2025-09-03', day: '03', totalProduction: 28.73, totalConsumption: 15.99, gridFeed: 24.05, gridConsumption: 8.47, selfConsumption: 4.68, selfSufficiency: 29.3 },
+          { date: '2025-09-04', day: '04', totalProduction: 40.27, totalConsumption: 15.13, gridFeed: 36.0, gridConsumption: 7.49, selfConsumption: 4.27, selfSufficiency: 28.2 },
+          { date: '2025-09-05', day: '05', totalProduction: 28.65, totalConsumption: 14.70, gridFeed: 27.16, gridConsumption: 8.53, selfConsumption: 1.49, selfSufficiency: 10.1 },
+          { date: '2025-09-06', day: '06', totalProduction: 9.01, totalConsumption: 29.87, gridFeed: 3.43, gridConsumption: 15.51, selfConsumption: 5.58, selfSufficiency: 18.7 },
+          { date: '2025-09-07', day: '07', totalProduction: 17.19, totalConsumption: 21.94, gridFeed: 9.96, gridConsumption: 10.85, selfConsumption: 7.23, selfSufficiency: 33.0 },
+          { date: '2025-09-08', day: '08', totalProduction: 24.79, totalConsumption: 19.35, gridFeed: 21.01, gridConsumption: 9.48, selfConsumption: 3.78, selfSufficiency: 19.5 },
+          { date: '2025-09-09', day: '09', totalProduction: 49.28, totalConsumption: 14.33, gridFeed: 45.92, gridConsumption: 7.50, selfConsumption: 3.36, selfSufficiency: 23.4 },
+          { date: '2025-09-10', day: '10', totalProduction: 40.93, totalConsumption: 19.12, gridFeed: 35.35, gridConsumption: 8.42, selfConsumption: 5.58, selfSufficiency: 29.2 },
+          { date: '2025-09-11', day: '11', totalProduction: 23.37, totalConsumption: 17.84, gridFeed: 18.85, gridConsumption: 10.06, selfConsumption: 4.52, selfSufficiency: 25.3 },
+          { date: '2025-09-12', day: '12', totalProduction: 45.44, totalConsumption: 10.98, gridFeed: 41.63, gridConsumption: 5.40, selfConsumption: 3.81, selfSufficiency: 34.7 },
+          { date: '2025-09-13', day: '13', totalProduction: 34.57, totalConsumption: 17.99, gridFeed: 25.78, gridConsumption: 8.22, selfConsumption: 8.79, selfSufficiency: 48.9 }
+        ];
+        // Fill the rest of September with zeros
+        this.plantData = this.fillMissingDays(
+          this.plantData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            day: day.toString().padStart(2, '0'),
+            totalProduction: 0,
+            totalConsumption: 0,
+            gridFeed: 0,
+            gridConsumption: 0,
+            selfConsumption: 0,
+            selfSufficiency: 0
+          })
+        );
+      } else {
+        // For other months/years, create all zero data
+        this.plantData = [];
+        this.plantData = this.fillMissingDays(
+          this.plantData,
+          this.currentMonth,
+          this.currentYear,
+          (day: number, dateStr: string) => ({
+            date: dateStr,
+            day: day.toString().padStart(2, '0'),
+            totalProduction: 0,
+            totalConsumption: 0,
+            gridFeed: 0,
+            gridConsumption: 0,
+            selfConsumption: 0,
+            selfSufficiency: 0
+          })
+        );
+      }
+    }
+    
+    this.updateAllCharts();
     this.updateMetricCards();
-    console.log('📅 Year changed to:', this.currentYear, '- Stored data available:', hasStoredInverterData && hasStoredMeterData);
+    console.log('📅 Year changed to:', this.currentYear, '- Stored data available:', hasStoredInverterData && hasStoredMeterData && hasStoredPlantData);
   }
 
 
@@ -803,15 +1079,17 @@ export class Dashboard implements OnInit, AfterViewInit {
     try {
       await Promise.all([
         this.fetchInverterData(),
-        this.fetchMeterData()
+        this.fetchMeterData(),
+        this.fetchPlantData()
       ]);
       
       // Save fetched data to localStorage
       this.saveInverterDataToStorage();
       this.saveMeterDataToStorage();
+      this.savePlantDataToStorage();
       
       this.updateMetricCards();
-      this.updateBothCharts();
+      this.updateAllCharts();
       console.log('✅ Data refresh completed successfully!');
     } catch (error: any) {
       console.log('❌ Data refresh failed:', error);
@@ -826,6 +1104,144 @@ export class Dashboard implements OnInit, AfterViewInit {
       console.error('Error fetching data:', error);
     } finally {
       this.isLoading = false;
+    }
+  }
+
+  async refreshInverterData() {
+    console.log('🚀 Starting inverter data refresh...');
+    console.log('🔑 Token available:', this.hasValidToken);
+    
+    // Check if we have a valid token, if not prompt for it
+    if (!this.hasValidToken) {
+      console.log('❌ No valid token, prompting user...');
+      await this.promptForToken();
+    }
+    
+    // If still no valid token, don't proceed
+    if (!this.hasValidToken) {
+      this.errorMessage = 'API token is required to fetch data.';
+      console.log('❌ Still no token after prompt, aborting...');
+      return;
+    }
+    
+    this.isInverterLoading = true;
+    this.errorMessage = '';
+    console.log('⏳ Starting inverter API call...');
+    
+    try {
+      await this.fetchInverterData();
+      
+      // Save fetched data to localStorage
+      this.saveInverterDataToStorage();
+      
+      this.updateMetricCards();
+      this.updateAllCharts();
+      console.log('✅ Inverter data refresh completed successfully!');
+    } catch (error: any) {
+      console.log('❌ Inverter data refresh failed:', error);
+      
+      if (error.status === 0) {
+        this.errorMessage = 'CORS Error: Cannot connect to server. Check if CORS is properly configured on the server.';
+      } else if (error.status === 401 || error.status === 403) {
+        this.errorMessage = 'Authentication failed. Please check your API token.';
+      } else {
+        this.errorMessage = `Failed to fetch inverter data. Server returned: ${error.status} - ${error.statusText}`;
+      }
+      console.error('Error fetching inverter data:', error);
+    } finally {
+      this.isInverterLoading = false;
+    }
+  }
+
+  async refreshMeterData() {
+    console.log('🚀 Starting meter data refresh...');
+    console.log('🔑 Token available:', this.hasValidToken);
+    
+    // Check if we have a valid token, if not prompt for it
+    if (!this.hasValidToken) {
+      console.log('❌ No valid token, prompting user...');
+      await this.promptForToken();
+    }
+    
+    // If still no valid token, don't proceed
+    if (!this.hasValidToken) {
+      this.errorMessage = 'API token is required to fetch data.';
+      console.log('❌ Still no token after prompt, aborting...');
+      return;
+    }
+    
+    this.isMeterLoading = true;
+    this.errorMessage = '';
+    console.log('⏳ Starting meter API call...');
+    
+    try {
+      await this.fetchMeterData();
+      
+      // Save fetched data to localStorage
+      this.saveMeterDataToStorage();
+      
+      this.updateMetricCards();
+      this.updateAllCharts();
+      console.log('✅ Meter data refresh completed successfully!');
+    } catch (error: any) {
+      console.log('❌ Meter data refresh failed:', error);
+      
+      if (error.status === 0) {
+        this.errorMessage = 'CORS Error: Cannot connect to server. Check if CORS is properly configured on the server.';
+      } else if (error.status === 401 || error.status === 403) {
+        this.errorMessage = 'Authentication failed. Please check your API token.';
+      } else {
+        this.errorMessage = `Failed to fetch meter data. Server returned: ${error.status} - ${error.statusText}`;
+      }
+      console.error('Error fetching meter data:', error);
+    } finally {
+      this.isMeterLoading = false;
+    }
+  }
+
+  async refreshPlantData() {
+    console.log('🚀 Starting plant data refresh...');
+    console.log('🔑 Token available:', this.hasValidToken);
+    
+    // Check if we have a valid token, if not prompt for it
+    if (!this.hasValidToken) {
+      console.log('❌ No valid token, prompting user...');
+      await this.promptForToken();
+    }
+    
+    // If still no valid token, don't proceed
+    if (!this.hasValidToken) {
+      this.errorMessage = 'API token is required to fetch data.';
+      console.log('❌ Still no token after prompt, aborting...');
+      return;
+    }
+    
+    this.isPlantLoading = true;
+    this.errorMessage = '';
+    console.log('⏳ Starting plant API call...');
+    
+    try {
+      await this.fetchPlantData();
+      
+      // Save fetched data to localStorage
+      this.savePlantDataToStorage();
+      
+      this.updateMetricCards();
+      this.updateAllCharts();
+      console.log('✅ Plant data refresh completed successfully!');
+    } catch (error: any) {
+      console.log('❌ Plant data refresh failed:', error);
+      
+      if (error.status === 0) {
+        this.errorMessage = 'CORS Error: Cannot connect to server. Check if CORS is properly configured on the server.';
+      } else if (error.status === 401 || error.status === 403) {
+        this.errorMessage = 'Authentication failed. Please check your API token.';
+      } else {
+        this.errorMessage = `Failed to fetch plant data. Server returned: ${error.status} - ${error.statusText}`;
+      }
+      console.error('Error fetching plant data:', error);
+    } finally {
+      this.isPlantLoading = false;
     }
   }
 
@@ -905,6 +1321,44 @@ export class Dashboard implements OnInit, AfterViewInit {
     }
   }
 
+  private async fetchPlantData() {
+    try {
+      const url = `http://192.168.1.180:7070/metrics/plant/daily?month=${this.currentMonth}&year=${this.currentYear}`;
+      console.log('🔄 Fetching PLANT data from:', url);
+      console.log('🔑 Current authToken:', this.authToken ? `${this.authToken.substring(0, 50)}...` : 'NO TOKEN');
+      
+      console.log('📤 Using fetch() instead of HttpClient to bypass CORS preflight');
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Global-Home-Token': this.authToken
+        },
+        mode: 'cors'
+      });
+      
+      console.log('📥 PLANT response status:', response.status);
+      console.log('📥 PLANT response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ PLANT response body:', data);
+      
+      if (data && data.summary) {
+        this.plantData = this.transformPlantData(data);
+        console.log('📊 PLANT data transformed:', this.plantData);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching plant data:', error);
+      console.error('❌ Error message:', error.message);
+      console.error('❌ Full error object:', error);
+      throw error;
+    }
+  }
+
   private transformInverterData(response: DeviceResponse): EnergyData[] {
     const serverData = response.summary.map(item => {
       const date = new Date(item.date);
@@ -965,6 +1419,44 @@ export class Dashboard implements OnInit, AfterViewInit {
     );
   }
 
+  private transformPlantData(response: DeviceResponse): PlantData[] {
+    const serverData = response.summary.map(item => {
+      const date = new Date(item.date);
+      const dayNumber = date.getDate().toString().padStart(2, '0');
+      
+      // Transform API response to match PlantData interface
+      // Note: These property names are assumptions based on typical plant data structure
+      // You may need to adjust based on actual API response structure
+      return {
+        date: item.date,
+        day: dayNumber,
+        totalProduction: item.paramsSummary?.total_production_kwh_ || 0,
+        totalConsumption: item.paramsSummary?.total_consumption_kwh_ || 0,
+        gridFeed: item.paramsSummary?.grid_feed_kwh_ || 0,
+        gridConsumption: item.paramsSummary?.grid_consumption_kwh_ || 0,
+        selfConsumption: item.paramsSummary?.self_consumption_kwh_ || 0,
+        selfSufficiency: item.paramsSummary?.self_sufficiency_percent_ || 0
+      };
+    });
+
+    // Fill missing days with zero values
+    return this.fillMissingDays(
+      serverData,
+      this.currentMonth,
+      this.currentYear,
+      (day: number, dateStr: string) => ({
+        date: dateStr,
+        day: day.toString().padStart(2, '0'),
+        totalProduction: 0,
+        totalConsumption: 0,
+        gridFeed: 0,
+        gridConsumption: 0,
+        selfConsumption: 0,
+        selfSufficiency: 0
+      })
+    );
+  }
+
   updateMetricCards() {
     // Calculate combined metrics from both inverter and meter data
     const inverterTotal = this.inverterData.reduce((sum, item) => sum + item.value, 0);
@@ -1004,10 +1496,11 @@ export class Dashboard implements OnInit, AfterViewInit {
     ];
   }
 
-  updateBothCharts() {
-    console.log('📊 Updating both charts...');
+  updateAllCharts() {
+    console.log('📊 Updating all charts...');
     this.updateInverterChart();
     this.updateMeterChart();
+    this.updatePlantChart();
     
     // Force chart update if available
     setTimeout(() => {
@@ -1153,5 +1646,135 @@ export class Dashboard implements OnInit, AfterViewInit {
 
     this.meterChartOptions.plugins!.title!.text = `Grid Energy Flow - ${this.currentDateDisplayText}`;
     console.log('✅ Meter chart data updated with meaningful data only:', this.meterChartData);
+  }
+
+  private updatePlantChart() {
+    console.log('🔧 Updating plant chart with data:', this.plantData);
+    console.log('🔍 Plant data sample values:', {
+      totalProduction: this.plantData.slice(0, 3).map(d => d.totalProduction),
+      totalConsumption: this.plantData.slice(0, 3).map(d => d.totalConsumption),
+      selfConsumption: this.plantData.slice(0, 3).map(d => d.selfConsumption),
+      gridFeed: this.plantData.slice(0, 3).map(d => d.gridFeed)
+    });
+    
+    const labels = this.plantData.map(item => item.day);
+    console.log('📊 Plant chart labels:', labels);
+
+    // Helper function to check if dataset has meaningful data (not all zeros)
+    const hasData = (values: number[]) => values.some(value => value > 0);
+
+    // Prepare all possible datasets for plant metrics
+    const potentialDatasets = [
+      {
+        condition: hasData(this.plantData.map(item => item.totalProduction)),
+        dataset: {
+          label: 'Total Production',
+          data: this.plantData.map(item => item.totalProduction),
+          borderColor: 'rgb(34, 197, 94)', // Green for production
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(34, 197, 94)',
+          pointBorderColor: 'rgb(34, 197, 94)',
+          pointHoverBackgroundColor: 'rgb(22, 163, 74)',
+          pointHoverBorderColor: 'rgb(22, 163, 74)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: hasData(this.plantData.map(item => item.totalConsumption)),
+        dataset: {
+          label: 'Total Consumption',
+          data: this.plantData.map(item => item.totalConsumption),
+          borderColor: 'rgb(239, 68, 68)', // Red for consumption
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(239, 68, 68)',
+          pointBorderColor: 'rgb(239, 68, 68)',
+          pointHoverBackgroundColor: 'rgb(220, 38, 38)',
+          pointHoverBorderColor: 'rgb(220, 38, 38)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: hasData(this.plantData.map(item => item.selfConsumption)),
+        dataset: {
+          label: 'Self Consumption',
+          data: this.plantData.map(item => item.selfConsumption),
+          borderColor: 'rgb(139, 92, 246)', // Purple for self consumption
+          backgroundColor: 'rgba(139, 92, 246, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(139, 92, 246)',
+          pointBorderColor: 'rgb(139, 92, 246)',
+          pointHoverBackgroundColor: 'rgb(124, 58, 237)',
+          pointHoverBorderColor: 'rgb(124, 58, 237)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: hasData(this.plantData.map(item => item.gridFeed)),
+        dataset: {
+          label: 'Grid Feed',
+          data: this.plantData.map(item => item.gridFeed),
+          borderColor: 'rgb(16, 185, 129)', // Teal for grid feed
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(16, 185, 129)',
+          pointBorderColor: 'rgb(16, 185, 129)',
+          pointHoverBackgroundColor: 'rgb(5, 150, 105)',
+          pointHoverBorderColor: 'rgb(5, 150, 105)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      }
+    ];
+
+    // Filter datasets to only include those with meaningful data
+    const validDatasets = potentialDatasets
+      .filter(item => item.condition)
+      .map(item => item.dataset);
+
+    console.log('📊 Filtered plant datasets (excluding all-zero data):', validDatasets.length, 'out of', potentialDatasets.length);
+    
+    // If no valid datasets found, show all datasets anyway (including zero data for debugging)
+    if (validDatasets.length === 0) {
+      console.log('⚠️ No valid plant datasets found, showing all datasets for debugging');
+      const allDatasets = potentialDatasets.map(item => item.dataset);
+      this.plantChartData = {
+        labels: labels,
+        datasets: allDatasets
+      };
+    } else {
+      this.plantChartData = {
+        labels: labels,
+        datasets: validDatasets
+      };
+    }
+
+    this.plantChartOptions.plugins!.title!.text = `Plant Energy Overview - ${this.currentDateDisplayText}`;
+    console.log('✅ Plant chart data updated with meaningful data only:', this.plantChartData);
+    const finalDatasetCount = this.plantChartData.datasets?.length || 0;
+    console.log('🔍 Final chart datasets count:', finalDatasetCount);
+    console.log('🔍 Chart data structure:', {
+      hasLabels: this.plantChartData.labels && this.plantChartData.labels.length > 0,
+      hasDatasets: this.plantChartData.datasets && this.plantChartData.datasets.length > 0,
+      datasetCount: finalDatasetCount
+    });
+    
+    if (finalDatasetCount === 0) {
+      console.warn('⚠️ No datasets in plant chart! Chart will show "Plant data is being prepared..."');
+    } else {
+      console.log('✅ Plant chart should render with', finalDatasetCount, 'datasets');
+    }
   }
 }

@@ -1,0 +1,25 @@
+meta {
+  name: daily plant stats
+  type: http
+  seq: 3
+}
+
+get {
+  url: http://192.168.1.180:7070/metrics/device/METER/daily?month=09&year=2025
+  body: none
+  auth: inherit
+}
+
+params:query {
+  month: 09
+  year: 2025
+}
+
+headers {
+  X-Global-Home-Token: eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX25hbWUiOiIwX3phcGFydG1Ab3V0bG9vay5jb21fMiIsIm1vZGlmeV9wYXNzd29yZCI6MSwic2NvcGUiOlsiYWxsIl0sImRldGFpbCI6eyJvcmdhbml6YXRpb25JZCI6MCwidG9wR3JvdXBJZCI6bnVsbCwiZ3JvdXBJZCI6bnVsbCwicm9sZUlkIjotMSwidXNlcklkIjo3NzQzMTAsInZlcnNpb24iOjEwMDAsImlkZW50aWZpZXIiOiJ6YXBhcnRtQG91dGxvb2suY29tIiwiaWRlbnRpdHlUeXBlIjoyLCJtZGMiOiJGT1JFSUdOXzEiLCJhcHBJZCI6bnVsbH0sImV4cCI6MTc2Mjk3MzY1NCwibWRjIjoiRk9SRUlHTl8xIiwiYXV0aG9yaXRpZXMiOlsiYWxsIl0sImp0aSI6Ijk1YTIyMTE2LWI2NTktNDI2OS04ZDZkLTRlYTMxMjljODI0YSIsImNsaWVudF9pZCI6InRlc3QifQ.X5iYdIm8n9pf0wHaEVbBhc5VPOwIfLskber417iq62JJGDpr6BsR7vLlSoRgBpxIqfkTXRevlPhPDOx6svCnVlK7y66aLbCu2KaGd6jG5Sk-9TyCwHoenDpRMZLAEw29VcZkFeobiUC3urZkJet1NgJRSArfFXGM5jbgAh8tO0eiTalQZ5-GD2pIoofNQfShH6cq66jl9XkDqoGAADTo0UuVb3z2EfQStpeJhKgz2SWU0dQfK4sMHODuJfFCtHGBD66qWJVKQjWwSY4oSt2qTk4d45uznfOs-436ixeq5zpVPp2vQT9sbkqQy27Aoi2ZGsyN-bEyjyju_N5Dr09IcA
+  Accept: application/json
+}
+
+settings {
+  encodeUrl: true
+}
