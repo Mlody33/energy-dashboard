@@ -1513,7 +1513,7 @@ export class Dashboard implements OnInit, AfterViewInit {
         value: `${inverterTotal.toFixed(2)} kWh`,
         icon: 'pi pi-sun',
         color: 'white',
-        bgColor: 'linear-gradient(45deg, #10b981, #059669)'
+        bgColor: 'linear-gradient(45deg,rgb(34, 99, 197),rgb(30, 103, 192))'
       },
       {
         title: 'Grid Export', 
@@ -1569,14 +1569,14 @@ export class Dashboard implements OnInit, AfterViewInit {
         {
           label: 'Solar Production',
           data: values,
-          borderColor: 'rgb(16, 185, 129)',
-          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          borderColor: 'rgb(59, 130, 246)',
+          backgroundColor: 'rgba(59, 130, 246, 0.1)',
           fill: true,
           tension: 0.4,
-          pointBackgroundColor: 'rgb(16, 185, 129)',
-          pointBorderColor: 'rgb(16, 185, 129)',
-          pointHoverBackgroundColor: 'rgb(5, 150, 105)',
-          pointHoverBorderColor: 'rgb(5, 150, 105)',
+          pointBackgroundColor: 'rgb(59, 130, 246)',
+          pointBorderColor: 'rgb(59, 130, 246)',
+          pointHoverBackgroundColor: 'rgb(37, 99, 235)',
+          pointHoverBorderColor: 'rgb(37, 99, 235)',
           pointRadius: 2,
           pointHoverRadius: 4,
           borderWidth: 3
@@ -1712,14 +1712,14 @@ export class Dashboard implements OnInit, AfterViewInit {
       {
         label: 'Total Production',
         data: this.plantData.map(item => item.totalProduction),
-        borderColor: 'rgb(34, 197, 94)', // Green for production
-        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+        borderColor: 'rgb(59, 130, 246)', // Blue for production
+        backgroundColor: 'rgba(59, 130, 246, 0.1)',
         fill: true,
         tension: 0.4,
-        pointBackgroundColor: 'rgb(34, 197, 94)',
-        pointBorderColor: 'rgb(34, 197, 94)',
-        pointHoverBackgroundColor: 'rgb(22, 163, 74)',
-        pointHoverBorderColor: 'rgb(22, 163, 74)',
+        pointBackgroundColor: 'rgb(59, 130, 246)',
+        pointBorderColor: 'rgb(59, 130, 246)',
+        pointHoverBackgroundColor: 'rgb(37, 99, 235)',
+        pointHoverBorderColor: 'rgb(37, 99, 235)',
         pointRadius: 2,
         pointHoverRadius: 4,
         borderWidth: 3

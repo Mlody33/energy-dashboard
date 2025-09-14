@@ -1,8 +1,8 @@
 .sidebar {
   width: 280px;
   height: 100vh;
-  background: #f8fafc;
-  border-right: 1px solid #e2e8f0;
+  background: #1e293b;
+  border-right: 1px solid #475569;
   display: flex;
   flex-direction: column;
   position: fixed;
@@ -13,7 +13,7 @@
 
 .sidebar-header {
   padding: 1.5rem 1rem;
-  border-bottom: 1px solid #e2e8f0;
+  border-bottom: 1px solid #475569;
 }
 
 .brand {
@@ -37,7 +37,7 @@
 .brand-text {
   font-size: 1.5rem;
   font-weight: 600;
-  color: #1e293b;
+  color: #f1f5f9;
   font-family: 'Inter', sans-serif;
 }
 
@@ -57,7 +57,7 @@
   padding: 0.75rem 1rem;
   cursor: pointer;
   transition: all 0.2s ease;
-  color: #64748b;
+  color: #94a3b8;
   font-size: 0.75rem;
   font-weight: 600;
   letter-spacing: 0.05em;
@@ -65,8 +65,8 @@
 }
 
 .menu-group-header:hover {
-  background: #f1f5f9;
-  color: #475569;
+  background: #334155;
+  color: #cbd5e1;
 }
 
 .menu-group-header i {
@@ -93,7 +93,7 @@
   display: flex;
   align-items: center;
   padding: 0.75rem 1rem;
-  color: #64748b;
+  color: #94a3b8;
   text-decoration: none;
   transition: all 0.2s ease;
   border-radius: 8px;
@@ -103,8 +103,8 @@
 }
 
 .menu-item:hover {
-  background: #f1f5f9;
-  color: #475569;
+  background: #334155;
+  color: #e2e8f0;
 }
 
 .menu-item.active {
@@ -129,12 +129,12 @@
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #475569;
   border-radius: 4px;
 }
 
 .sidebar-nav::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
 }
 
 /* Responsive design */

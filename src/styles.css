@@ -30,8 +30,8 @@ html, body {
   font-family: 'Inter', sans-serif;
   font-size: 14px;
   line-height: 1.6;
-  color: #1e293b;
-  background-color: #f5f5f7;
+  color: #f1f5f9;
+  background-color: #0f172a;
 }
 
 /* Scrollbar Styling */
@@ -41,16 +41,16 @@ html, body {
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f5f9;
+  background: #1e293b;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #475569;
   border-radius: 3px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #64748b;
 }
 
 /* Button Hover Effects */
@@ -65,10 +65,12 @@ button:not(:disabled):hover {
 /* Card Hover Effects */
 .card, .p-card {
   transition: all 0.3s ease;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .card:hover, .p-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
 }
 
 /* Custom Focus Styles */
@@ -135,19 +137,19 @@ input, select, textarea {
 }
 
 .text-gray-500 {
-  color: #64748b;
+  color: #94a3b8;
 }
 
 .text-gray-600 {
-  color: #475569;
+  color: #cbd5e1;
 }
 
 .text-gray-700 {
-  color: #334155;
+  color: #e2e8f0;
 }
 
 .text-gray-900 {
-  color: #0f172a;
+  color: #f1f5f9;
 }
 
 .text-green-600 {
@@ -263,8 +265,10 @@ input, select, textarea {
 }
 
 .p-card {
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
   border-radius: 12px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .p-card .p-card-body {
@@ -276,24 +280,25 @@ input, select, textarea {
 }
 
 .p-table .p-table-thead > tr > th {
-  background: #f8fafc;
-  color: #374151;
+  background: #334155;
+  color: #f1f5f9;
   font-weight: 600;
   font-size: 0.875rem;
   text-transform: uppercase;
   letter-spacing: 0.025em;
   border: none;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #475569;
 }
 
 .p-table .p-table-tbody > tr > td {
   border: none;
-  border-bottom: 1px solid #f3f4f6;
-  color: #374151;
+  border-bottom: 1px solid #334155;
+  color: #e2e8f0;
+  background: #1e293b;
 }
 
 .p-table .p-table-tbody > tr:hover {
-  background: #f8fafc;
+  background: #334155;
 }
 
 .p-dropdown {
@@ -332,6 +337,7 @@ input, select, textarea {
 .slide-in {
   animation: slideIn 0.3s ease-out;
 }
+
 
 /* Responsive Utilities */
 @media (max-width: 640px) {
