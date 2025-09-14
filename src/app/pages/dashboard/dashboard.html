@@ -16,86 +16,117 @@
     }
   </div>
 
-  <!-- Orders Section - Full Width -->
-  <div class="content-section orders-section">
+  <!-- Energy Dashboard Section - Full Width -->
+  <div class="content-section energy-section">
     <div class="section-header">
-      <h3>Orders</h3>
-      <p>Your monthly orders data from <strong>last 12 month</strong></p>
-      <div class="period-selector">
-        <select class="period-dropdown">
-          <option>Monthly</option>
-          <option>Weekly</option>
-          <option>Daily</option>
+      <div class="section-info">
+        <h3>{{ chartTitle }}</h3>
+        <p>{{ chartSubtitle }} - {{ currentDateDisplayText }}</p>
+      </div>
+      <div class="data-selector">
+        <select class="data-dropdown" (change)="onDataTypeChange($event)" [value]="selectedDataType" [disabled]="isLoading">
+          <option value="inverter">Inverter Production</option>
+          <option value="meter">Meter Energy Data (Import/Export)</option>
         </select>
+        <select class="month-dropdown" (change)="onMonthChange($event)" [value]="currentMonth" [disabled]="isLoading" title="Select Month">
+          <option value="01">January</option>
+          <option value="02">February</option>
+          <option value="03">March</option>
+          <option value="04">April</option>
+          <option value="05">May</option>
+          <option value="06">June</option>
+          <option value="07">July</option>
+          <option value="08">August</option>
+          <option value="09">September</option>
+          <option value="10">October</option>
+          <option value="11">November</option>
+          <option value="12">December</option>
+        </select>
+        <select class="year-dropdown" (change)="onYearChange($event)" [value]="currentYear" [disabled]="isLoading" title="Select Year">
+          <option value="2020">2020</option>
+          <option value="2021">2021</option>
+          <option value="2022">2022</option>
+          <option value="2023">2023</option>
+          <option value="2024">2024</option>
+          <option value="2025">2025</option>
+          <option value="2026">2026</option>
+          <option value="2027">2027</option>
+          <option value="2028">2028</option>
+          <option value="2029">2029</option>
+          <option value="2030">2030</option>
+        </select>
+        <button class="token-btn" (click)="changeToken()" [disabled]="isLoading" title="Change API Token">
+          <i class="pi pi-key"></i>
+          <span>Token</span>
+        </button>
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh Data">
+          <i class="pi" [class.pi-refresh]="!isLoading" [class.pi-spin]="isLoading" [class.pi-spinner]="isLoading"></i>
+          <span>{{ isLoading ? 'Loading...' : 'Refresh' }}</span>
+        </button>
       </div>
     </div>
+
+    <!-- Token Status -->
+    @if (!hasValidToken) {
+      <div class="warning-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>API token required. Click "Token" button to set your X-Global-Home-Token.</span>
+      </div>
+    }
+    
+    <!-- Error Message -->
+    @if (errorMessage) {
+      <div class="error-message">
+        <i class="pi pi-exclamation-triangle"></i>
+        <span>{{ errorMessage }}</span>
+      </div>
+    }
 
     <!-- Chart Statistics -->
     <div class="chart-stats">
       <div class="stat-group">
+        @if (selectedDataType === 'inverter') {
+          <div class="stat-item">
+            <span class="stat-label">Total Production</span>
+            <span class="stat-value">{{ totalEnergy.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Average Daily</span>
+            <span class="stat-value">{{ averageEnergy.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Peak Day</span>
+            <span class="stat-value">{{ peakEnergy.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Minimum Day</span>
+            <span class="stat-value">{{ minEnergy.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+        } @else {
+          <div class="stat-item">
+            <span class="stat-label">Total Export Main</span>
+            <span class="stat-value">{{ totalExportMain.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Import Main</span>
+            <span class="stat-value">{{ totalImportMain.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Total Import T2</span>
+            <span class="stat-value">{{ totalImportTariff2.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">Peak Value</span>
+            <span class="stat-value">{{ peakEnergy.toFixed(2) }} {{ chartUnit }}</span>
+          </div>
+        }
         <div class="stat-item">
-          <span class="stat-label">Your Orders</span>
-          <span class="stat-value">3921</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Total Units</span>
-          <span class="stat-value">4143</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Total Sales</span>
-          <span class="stat-value">$109,788.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Avg. sales/orders item</span>
-          <span class="stat-value">$28.00</span>
-        </div>
-        <div class="stat-item">
-          <span class="stat-label">Avg. units/orders item</span>
-          <span class="stat-value">1.2</span>
+          <span class="stat-label">Days Active</span>
+          <span class="stat-value">{{ daysActive }}</span>
         </div>
       </div>
     </div>
 
-    <!-- Chart Area -->
-    <div class="chart-container">
-      <div class="chart-legend">
-        <div class="legend-item">
-          <div class="legend-color orders-color"></div>
-          <span>Orders</span>
-        </div>
-        <div class="legend-item">
-          <div class="legend-color units-color"></div>
-          <span>Units</span>
-        </div>
-      </div>
-      
-      <div class="chart-area">
-        <!-- Chart Grid Lines -->
-        <div class="chart-grid">
-          <div class="grid-line" style="bottom: 0px;"></div>
-          <div class="grid-line" style="bottom: 40px;"></div>
-          <div class="grid-line" style="bottom: 80px;"></div>
-          <div class="grid-line" style="bottom: 120px;"></div>
-          <div class="grid-line" style="bottom: 160px;"></div>
-          <div class="grid-line" style="bottom: 200px;"></div>
-          <div class="grid-line" style="bottom: 240px;"></div>
-          <div class="grid-line" style="bottom: 280px;"></div>
-          <div class="grid-line" style="bottom: 320px;"></div>
-        </div>
-        
-        <!-- Chart Data -->
-        <div class="chart-data">
-          @for (data of chartData; track data.month) {
-            <div class="chart-month">
-              <div class="chart-bars">
-                <div class="chart-bar orders-bar" [style.height.px]="data.orders * 20"></div>
-                <div class="chart-bar units-bar" [style.height.px]="data.units * 20"></div>
-              </div>
-              <span class="month-label">{{ data.month }}</span>
-            </div>
-          }
-        </div>
-      </div>
-    </div>
   </div>
+
 </div>

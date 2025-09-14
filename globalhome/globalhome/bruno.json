@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "globalhome",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}
