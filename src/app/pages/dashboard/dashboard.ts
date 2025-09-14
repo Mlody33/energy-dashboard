@@ -970,7 +970,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     const inverterTotal = this.inverterData.reduce((sum, item) => sum + item.value, 0);
     const meterExportTotal = this.meterData.reduce((sum, item) => sum + item.exportMain, 0);
     const meterImportTotal = this.meterData.reduce((sum, item) => sum + item.importMain + item.importTariff2, 0);
-    const daysActive = this.inverterData.length;
+    const homeUsage = this.meterData.reduce((sum, item) => sum + item.importTariff2, 0);
 
     this.metricCards = [
       {
@@ -995,11 +995,11 @@ export class Dashboard implements OnInit, AfterViewInit {
         bgColor: 'linear-gradient(45deg, #ef4444, #dc2626)'
       },
       {
-        title: 'Days Active',
-        value: `${daysActive}`,
-        icon: 'pi pi-calendar',
+        title: 'Home Usage',
+        value: `${homeUsage.toFixed(2)} kWh`,
+        icon: 'pi pi-home',
         color: 'white', 
-        bgColor: 'linear-gradient(45deg, #f59e0b, #d97706)'
+        bgColor: 'linear-gradient(45deg, #8b5cf6, #7c3aed)'
       }
     ];
   }
