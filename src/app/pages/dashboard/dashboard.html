@@ -16,18 +16,14 @@
     }
   </div>
 
-  <!-- Energy Dashboard Section - Full Width -->
+  <!-- Controls Section -->
   <div class="content-section energy-section">
     <div class="section-header">
       <div class="section-info">
-        <h3>{{ chartTitle }}</h3>
-        <p>{{ chartSubtitle }} - {{ currentDateDisplayText }}</p>
+        <h3>Energy Dashboard</h3>
+        <p>Solar production and grid energy data - {{ currentDateDisplayText }}</p>
       </div>
       <div class="data-selector">
-        <select class="data-dropdown" (change)="onDataTypeChange($event)" [value]="selectedDataType" [disabled]="isLoading">
-          <option value="inverter">Inverter Production</option>
-          <option value="meter">Meter Energy Data (Import/Export)</option>
-        </select>
         <select class="month-dropdown" (change)="onMonthChange($event)" [value]="currentMonth" [disabled]="isLoading" title="Select Month">
           <option value="01">January</option>
           <option value="02">February</option>
@@ -81,80 +77,66 @@
         <span>{{ errorMessage }}</span>
       </div>
     }
+  </div>
 
-    <!-- Chart Statistics -->
-    <div class="chart-stats">
-      <div class="stat-group">
-        @if (selectedDataType === 'inverter') {
-          <div class="stat-item">
-            <span class="stat-label">Total Production</span>
-            <span class="stat-value">{{ totalEnergy.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Average Daily</span>
-            <span class="stat-value">{{ averageEnergy.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Peak Day</span>
-            <span class="stat-value">{{ peakEnergy.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Minimum Day</span>
-            <span class="stat-value">{{ minEnergy.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-        } @else {
-          <div class="stat-item">
-            <span class="stat-label">Total Export Main</span>
-            <span class="stat-value">{{ totalExportMain.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Total Import Main</span>
-            <span class="stat-value">{{ totalImportMain.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Total Import T2</span>
-            <span class="stat-value">{{ totalImportTariff2.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-          <div class="stat-item">
-            <span class="stat-label">Peak Value</span>
-            <span class="stat-value">{{ peakEnergy.toFixed(2) }} {{ chartUnit }}</span>
-          </div>
-        }
-        <div class="stat-item">
-          <span class="stat-label">Days Active</span>
-          <span class="stat-value">{{ daysActive }}</span>
-        </div>
+  <!-- Inverter Chart Section -->
+  <div class="content-section energy-section">
+    <div class="section-header">
+      <div class="section-info">
+        <h3>☀️ Inverter Production</h3>
+        <p>Daily solar energy production from inverter</p>
       </div>
     </div>
 
-    <!-- Interactive Chart Section -->
-    <div class="chart-container">
-      <h4 style="margin-bottom: 1rem; color: #374151; font-size: 1.1rem;">Energy Chart</h4>
-      
-      <!-- Debug info -->
-      <div style="margin-bottom: 1rem; padding: 0.5rem; background: #f3f4f6; border-radius: 4px; font-size: 0.75rem; color: #6b7280;">
-        Chart Type: {{ chartType }} | Data Points: {{ chartData.datasets.length > 0 ? chartData.datasets[0].data.length : 0 }} | Labels: {{ chartData.labels?.length }}
-      </div>
-      
-      <div class="chart-wrapper" style="height: 400px; width: 100%; border: 1px solid #e5e7eb; position: relative;">
-        @if (chartData.datasets && chartData.datasets.length > 0) {
+    <div class="chart-container-inner">
+      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
+        @if (inverterChartData.datasets && inverterChartData.datasets.length > 0) {
           <canvas
             baseChart
-            [data]="chartData"
-            [options]="chartOptions"
+            [data]="inverterChartData"
+            [options]="inverterChartOptions"
             [type]="chartType"
             width="800"
-            height="400"
-            style="display: block !important; width: 100% !important; height: 100% !important;">
+            height="350"
+            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
           </canvas>
         } @else {
           <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
-            📊 Chart data is being prepared... ({{ chartData.datasets.length || 0 }} datasets)
+            📊 Inverter data is being prepared...
           </div>
         }
       </div>
     </div>
+  </div>
 
+  <!-- Meter Chart Section -->
+  <div class="content-section energy-section">
+    <div class="section-header">
+      <div class="section-info">
+        <h3>⚡ Meter Energy Data</h3>
+        <p>Grid energy import/export measurements</p>
+      </div>
+    </div>
+
+    <div class="chart-container-inner">
+      <div class="chart-wrapper" style="height: 350px; width: 100%; position: relative;">
+        @if (meterChartData.datasets && meterChartData.datasets.length > 0) {
+          <canvas
+            baseChart
+            [data]="meterChartData"
+            [options]="meterChartOptions"
+            [type]="chartType"
+            width="800"
+            height="350"
+            style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+          </canvas>
+        } @else {
+          <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+            📊 Meter data is being prepared...
+          </div>
+        }
+      </div>
+    </div>
   </div>
 
 </div>

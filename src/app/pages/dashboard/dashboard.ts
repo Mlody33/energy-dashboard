@@ -36,8 +36,6 @@ interface DeviceResponse {
   uuid: string;
 }
 
-type DataType = 'inverter' | 'meter';
-type MeterDataType = 'exportMain' | 'exportTariff2' | 'importMain' | 'importTariff2';
 
 @Component({
   selector: 'app-dashboard',
@@ -49,10 +47,6 @@ export class Dashboard implements OnInit, AfterViewInit {
   private http = inject(HttpClient);
   
   @ViewChild(BaseChartDirective) chart?: BaseChartDirective;
-  
-  selectedDataType: DataType = 'inverter';
-  selectedMeterDataType: MeterDataType = 'exportMain';
-  showAllMeterData: boolean = true;
   
   // Loading and API state
   isLoading: boolean = false;
@@ -120,45 +114,39 @@ export class Dashboard implements OnInit, AfterViewInit {
   ];
 
   // Complete meter data with all 4 energy types
+  // Note: exportTariff2 set to all zeros to demonstrate filtering
   meterData: MeterEnergyData[] = [
-    { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 4.2, importMain: 7.28, importTariff2: 7.74 },
-    { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 5.8, importMain: 5.37, importTariff2: 5.7 },
-    { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 3.1, importMain: 8.47, importTariff2: 7.52 },
-    { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 6.2, importMain: 7.49, importTariff2: 7.64 },
-    { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 3.8, importMain: 8.53, importTariff2: 6.17 },
-    { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.5, importMain: 15.51, importTariff2: 14.36 },
-    { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 1.2, importMain: 10.85, importTariff2: 11.09 },
-    { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 2.9, importMain: 9.48, importTariff2: 9.87 },
-    { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 7.3, importMain: 7.5, importTariff2: 6.83 },
-    { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 4.9, importMain: 8.42, importTariff2: 10.7 },
-    { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 2.1, importMain: 10.06, importTariff2: 7.78 },
-    { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 6.7, importMain: 5.4, importTariff2: 5.58 },
-    { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 3.4, importMain: 8.22, importTariff2: 9.77 }
+    { date: '2025-09-01', day: '01', exportMain: 26.0, exportTariff2: 0.0, importMain: 7.28, importTariff2: 7.74 },
+    { date: '2025-09-02', day: '02', exportMain: 36.73, exportTariff2: 0.0, importMain: 5.37, importTariff2: 5.7 },
+    { date: '2025-09-03', day: '03', exportMain: 24.05, exportTariff2: 0.0, importMain: 8.47, importTariff2: 7.52 },
+    { date: '2025-09-04', day: '04', exportMain: 36.0, exportTariff2: 0.0, importMain: 7.49, importTariff2: 7.64 },
+    { date: '2025-09-05', day: '05', exportMain: 27.16, exportTariff2: 0.0, importMain: 8.53, importTariff2: 6.17 },
+    { date: '2025-09-06', day: '06', exportMain: 3.43, exportTariff2: 0.0, importMain: 15.51, importTariff2: 14.36 },
+    { date: '2025-09-07', day: '07', exportMain: 9.96, exportTariff2: 0.0, importMain: 10.85, importTariff2: 11.09 },
+    { date: '2025-09-08', day: '08', exportMain: 21.01, exportTariff2: 0.0, importMain: 9.48, importTariff2: 9.87 },
+    { date: '2025-09-09', day: '09', exportMain: 45.92, exportTariff2: 0.0, importMain: 7.5, importTariff2: 6.83 },
+    { date: '2025-09-10', day: '10', exportMain: 35.35, exportTariff2: 0.0, importMain: 8.42, importTariff2: 10.7 },
+    { date: '2025-09-11', day: '11', exportMain: 18.85, exportTariff2: 0.0, importMain: 10.06, importTariff2: 7.78 },
+    { date: '2025-09-12', day: '12', exportMain: 41.63, exportTariff2: 0.0, importMain: 5.4, importTariff2: 5.58 },
+    { date: '2025-09-13', day: '13', exportMain: 25.78, exportTariff2: 0.0, importMain: 8.22, importTariff2: 9.77 }
   ];
 
   // Chart configuration
   public chartType = 'line' as const;
-  public chartData: ChartData<'line'> = {
-    labels: ['01', '02', '03', '04', '05', '06', '07', '08', '09', '10', '11', '12', '13'],
-    datasets: [
-      {
-        label: 'Sample Data',
-        data: [30, 40, 28, 40, 28, 9, 17, 24, 49, 40, 23, 45, 34],
-        borderColor: 'rgb(16, 185, 129)',
-        backgroundColor: 'rgba(16, 185, 129, 0.1)',
-        fill: true,
-        tension: 0.4
-      }
-    ]
+  
+  // Inverter Chart Data
+  public inverterChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
   };
 
-  public chartOptions: ChartOptions<'line'> = {
+  public inverterChartOptions: ChartOptions<'line'> = {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
       title: {
         display: true,
-        text: 'Energy Data'
+        text: 'Solar Production'
       },
       legend: {
         display: true,
@@ -190,74 +178,52 @@ export class Dashboard implements OnInit, AfterViewInit {
     }
   };
 
-  get currentChartData() {
-    return this.selectedDataType === 'inverter' ? this.inverterData : this.meterData;
-  }
+  // Meter Chart Data
+  public meterChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
+  };
 
-  get chartTitle() {
-    return this.selectedDataType === 'inverter' ? 'Inverter Production' : 'Meter Energy Data';
-  }
-
-  get chartSubtitle() {
-    return this.selectedDataType === 'inverter' 
-      ? 'Daily energy production from solar inverter' 
-      : 'Daily energy import/export from grid meter';
-  }
+  public meterChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Grid Energy Flow'
+      },
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => `Date: ${context[0].label}`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Day of Month'
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Energy (kWh)'
+        }
+      }
+    }
+  };
 
   get chartUnit() {
     return 'kWh';
-  }
-
-  get totalEnergy() {
-    if (this.selectedDataType === 'inverter') {
-      return this.inverterData.reduce((sum, item) => sum + item.value, 0);
-    } else {
-      // For meter, sum all energy types
-      return this.meterData.reduce((sum, item) => 
-        sum + item.exportMain + item.exportTariff2 + item.importMain + item.importTariff2, 0);
-    }
-  }
-
-  get averageEnergy() {
-    return this.totalEnergy / this.currentChartData.length;
-  }
-
-  get peakEnergy() {
-    if (this.selectedDataType === 'inverter') {
-      return Math.max(...this.inverterData.map(item => item.value));
-    } else {
-      // For meter, find the peak across all energy types
-      return Math.max(...this.meterData.map(item => 
-        Math.max(item.exportMain, item.exportTariff2, item.importMain, item.importTariff2)));
-    }
-  }
-
-  get minEnergy() {
-    if (this.selectedDataType === 'inverter') {
-      return Math.min(...this.inverterData.map(item => item.value));
-    } else {
-      // For meter, find the minimum across all energy types (excluding zeros)
-      const allValues = this.meterData.flatMap(item => 
-        [item.exportMain, item.exportTariff2, item.importMain, item.importTariff2]
-      ).filter(val => val > 0);
-      return Math.min(...allValues);
-    }
-  }
-
-  get daysActive() {
-    return this.currentChartData.length;
-  }
-
-  get totalExportMain() {
-    return this.meterData.reduce((sum, item) => sum + item.exportMain, 0);
-  }
-
-  get totalImportMain() {
-    return this.meterData.reduce((sum, item) => sum + item.importMain, 0);
-  }
-
-  get totalImportTariff2() {
-    return this.meterData.reduce((sum, item) => sum + item.importTariff2, 0);
   }
 
   // Line chart data point generators
@@ -388,16 +354,14 @@ export class Dashboard implements OnInit, AfterViewInit {
     this.loadTokenFromStorage();
     this.loadDateSettingsFromStorage();
     
-    // Initialize chart with existing data
+    // Initialize both charts with existing data
     console.log('📊 Initializing chart data...');
-    this.updateChartData();
-    console.log('📊 Chart data after initialization:', this.chartData);
+    this.updateBothCharts();
     
     // Force a second update after a delay
     setTimeout(() => {
       console.log('📊 Force updating chart data again...');
-      this.updateChartData();
-      console.log('📊 Chart data after forced update:', this.chartData);
+      this.updateBothCharts();
     }, 500);
     
     // Data will only be fetched when refresh button is clicked
@@ -408,8 +372,8 @@ export class Dashboard implements OnInit, AfterViewInit {
     
     // Force chart update after view is initialized
     setTimeout(() => {
-      console.log('🔧 Force updating chart after view init...');
-      this.updateChartData();
+      console.log('🔧 Force updating charts after view init...');
+      this.updateBothCharts();
       if (this.chart) {
         this.chart.update();
         console.log('✅ Chart update called');
@@ -485,15 +449,19 @@ export class Dashboard implements OnInit, AfterViewInit {
   onMonthChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     const newMonth = target.value;
+    this.currentMonth = newMonth;
     this.saveDateSettingsToStorage(newMonth, this.currentYear);
-    // Month changed - user can manually refresh data if needed
+    this.updateBothCharts();
+    console.log('📅 Month changed to:', this.currentMonth);
   }
 
   onYearChange(event: Event) {
     const target = event.target as HTMLSelectElement;
     const newYear = target.value;
+    this.currentYear = newYear;
     this.saveDateSettingsToStorage(this.currentMonth, newYear);
-    // Year changed - user can manually refresh data if needed
+    this.updateBothCharts();
+    console.log('📅 Year changed to:', this.currentYear);
   }
 
 
@@ -549,7 +517,7 @@ export class Dashboard implements OnInit, AfterViewInit {
         this.fetchMeterData()
       ]);
       this.updateMetricCards();
-      this.updateChartData();
+      this.updateBothCharts();
       console.log('✅ Data refresh completed successfully!');
     } catch (error: any) {
       console.log('❌ Data refresh failed:', error);
@@ -676,98 +644,49 @@ export class Dashboard implements OnInit, AfterViewInit {
     });
   }
 
-  onDataTypeChange(event: Event) {
-    const target = event.target as HTMLSelectElement;
-    this.selectedDataType = target.value as DataType;
-    this.updateMetricCards();
-    this.updateChartData();
-  }
-
   updateMetricCards() {
-    if (this.selectedDataType === 'inverter') {
-      const data = this.inverterData;
-      const total = data.reduce((sum, item) => sum + item.value, 0);
-      const average = total / data.length;
-      const peak = Math.max(...data.map(item => item.value));
-        this.metricCards = [
-          {
-            title: 'Total Production',
-            value: `${total.toFixed(2)} kWh`,
-            icon: 'pi pi-bolt',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #10b981, #059669)'
-          },
-          {
-            title: 'Average Daily', 
-            value: `${average.toFixed(2)} kWh`,
-            icon: 'pi pi-chart-line',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #6b7280, #4b5563)'
-          },
-          {
-            title: 'Peak Day',
-            value: `${peak.toFixed(2)} kWh`, 
-            icon: 'pi pi-arrow-up',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #374151, #1f2937)'
-          },
-          {
-            title: 'Days Active',
-            value: `${data.length}`,
-            icon: 'pi pi-calendar',
-            color: 'white', 
-            bgColor: 'linear-gradient(45deg, #f59e0b, #d97706)'
-          }
-        ];
-      } else {
-        const data = this.meterData;
-        const totalExport = data.reduce((sum, item) => sum + item.exportMain, 0);
-        const totalImportMain = data.reduce((sum, item) => sum + item.importMain, 0);
-        const totalImportT2 = data.reduce((sum, item) => sum + item.importTariff2, 0);
-        const peakValue = Math.max(...data.map(item => 
-          Math.max(item.exportMain, item.importMain, item.importTariff2)));
-  
-        this.metricCards = [
-          {
-            title: 'Total Exported',
-            value: `${totalExport.toFixed(2)} kWh`,
-            icon: 'pi pi-upload',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #059669, #047857)'
-          },
-          {
-            title: 'Total Import Main', 
-            value: `${totalImportMain.toFixed(2)} kWh`,
-            icon: 'pi pi-download',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #ef4444, #dc2626)'
-          },
-          {
-            title: 'Import Tariff 2',
-            value: `${totalImportT2.toFixed(2)} kWh`, 
-            icon: 'pi pi-clock',
-            color: 'white',
-            bgColor: 'linear-gradient(45deg, #f97316, #ea580c)'
-          },
-          {
-            title: 'Days Active',
-            value: `${data.length}`,
-            icon: 'pi pi-calendar',
-            color: 'white', 
-            bgColor: 'linear-gradient(45deg, #6b7280, #4b5563)'
-          }
-        ];
+    // Calculate combined metrics from both inverter and meter data
+    const inverterTotal = this.inverterData.reduce((sum, item) => sum + item.value, 0);
+    const meterExportTotal = this.meterData.reduce((sum, item) => sum + item.exportMain, 0);
+    const meterImportTotal = this.meterData.reduce((sum, item) => sum + item.importMain + item.importTariff2, 0);
+    const daysActive = this.inverterData.length;
+
+    this.metricCards = [
+      {
+        title: 'Solar Production',
+        value: `${inverterTotal.toFixed(2)} kWh`,
+        icon: 'pi pi-sun',
+        color: 'white',
+        bgColor: 'linear-gradient(45deg, #10b981, #059669)'
+      },
+      {
+        title: 'Grid Export', 
+        value: `${meterExportTotal.toFixed(2)} kWh`,
+        icon: 'pi pi-upload',
+        color: 'white',
+        bgColor: 'linear-gradient(45deg, #059669, #047857)'
+      },
+      {
+        title: 'Grid Import',
+        value: `${meterImportTotal.toFixed(2)} kWh`, 
+        icon: 'pi pi-download',
+        color: 'white',
+        bgColor: 'linear-gradient(45deg, #ef4444, #dc2626)'
+      },
+      {
+        title: 'Days Active',
+        value: `${daysActive}`,
+        icon: 'pi pi-calendar',
+        color: 'white', 
+        bgColor: 'linear-gradient(45deg, #f59e0b, #d97706)'
       }
+    ];
   }
 
-  updateChartData() {
-    console.log('📊 updateChartData called for:', this.selectedDataType);
-    
-    if (this.selectedDataType === 'inverter') {
-      this.updateInverterChart();
-    } else {
-      this.updateMeterChart();
-    }
+  updateBothCharts() {
+    console.log('📊 Updating both charts...');
+    this.updateInverterChart();
+    this.updateMeterChart();
     
     // Force chart update if available
     setTimeout(() => {
@@ -784,14 +703,14 @@ export class Dashboard implements OnInit, AfterViewInit {
     const labels = this.inverterData.map(item => item.day);
     const values = this.inverterData.map(item => item.value);
     
-    console.log('📊 Chart labels:', labels);
-    console.log('📊 Chart values:', values);
+    console.log('📊 Inverter chart labels:', labels);
+    console.log('📊 Inverter chart values:', values);
 
-    this.chartData = {
+    this.inverterChartData = {
       labels: labels,
       datasets: [
         {
-          label: 'Inverter Production',
+          label: 'Solar Production',
           data: values,
           borderColor: 'rgb(16, 185, 129)',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -808,8 +727,8 @@ export class Dashboard implements OnInit, AfterViewInit {
       ]
     };
 
-    this.chartOptions.plugins!.title!.text = `Inverter Production - ${this.currentDateDisplayText}`;
-    console.log('✅ Chart data updated:', this.chartData);
+    this.inverterChartOptions.plugins!.title!.text = `Solar Production - ${this.currentDateDisplayText}`;
+    console.log('✅ Inverter chart data updated:', this.inverterChartData);
   }
 
   private updateMeterChart() {
@@ -818,10 +737,14 @@ export class Dashboard implements OnInit, AfterViewInit {
     const labels = this.meterData.map(item => item.day);
     console.log('📊 Meter chart labels:', labels);
 
-    this.chartData = {
-      labels: labels,
-      datasets: [
-        {
+    // Helper function to check if dataset has meaningful data (not all zeros)
+    const hasData = (values: number[]) => values.some(value => value > 0);
+
+    // Prepare all possible datasets
+    const potentialDatasets = [
+      {
+        condition: hasData(this.meterData.map(item => item.exportMain)),
+        dataset: {
           label: 'Export Whole Home (All Phases)',
           data: this.meterData.map(item => item.exportMain),
           borderColor: 'rgb(34, 197, 94)', // Green for export
@@ -835,8 +758,11 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointRadius: 2,
           pointHoverRadius: 4,
           borderWidth: 3
-        },
-        {
+        }
+      },
+      {
+        condition: hasData(this.meterData.map(item => item.exportTariff2)),
+        dataset: {
           label: 'Export Single Phase',
           data: this.meterData.map(item => item.exportTariff2),
           borderColor: 'rgb(132, 204, 22)', // Light green for single phase export
@@ -851,8 +777,11 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointHoverRadius: 4,
           borderWidth: 3,
           borderDash: [5, 5] // Dashed line for single phase
-        },
-        {
+        }
+      },
+      {
+        condition: hasData(this.meterData.map(item => item.importMain)),
+        dataset: {
           label: 'Import Whole Home (All Phases)',
           data: this.meterData.map(item => item.importMain),
           borderColor: 'rgb(239, 68, 68)', // Red for import
@@ -866,8 +795,11 @@ export class Dashboard implements OnInit, AfterViewInit {
           pointRadius: 2,
           pointHoverRadius: 4,
           borderWidth: 3
-        },
-        {
+        }
+      },
+      {
+        condition: hasData(this.meterData.map(item => item.importTariff2)),
+        dataset: {
           label: 'Import Single Phase',
           data: this.meterData.map(item => item.importTariff2),
           borderColor: 'rgb(249, 115, 22)', // Orange for single phase import
@@ -883,10 +815,22 @@ export class Dashboard implements OnInit, AfterViewInit {
           borderWidth: 3,
           borderDash: [5, 5] // Dashed line for single phase
         }
-      ]
+      }
+    ];
+
+    // Filter datasets to only include those with meaningful data
+    const validDatasets = potentialDatasets
+      .filter(item => item.condition)
+      .map(item => item.dataset);
+
+    console.log('📊 Filtered datasets (excluding all-zero data):', validDatasets.length, 'out of', potentialDatasets.length);
+
+    this.meterChartData = {
+      labels: labels,
+      datasets: validDatasets
     };
 
-    this.chartOptions.plugins!.title!.text = `Meter Energy Data - ${this.currentDateDisplayText}`;
-    console.log('✅ Meter chart data updated with all 4 data types:', this.chartData);
+    this.meterChartOptions.plugins!.title!.text = `Grid Energy Flow - ${this.currentDateDisplayText}`;
+    console.log('✅ Meter chart data updated with meaningful data only:', this.meterChartData);
   }
 }
