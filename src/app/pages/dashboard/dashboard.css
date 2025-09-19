@@ -335,6 +335,143 @@
   color: white;
 }
 
+/* Date Range Picker Styles for Detailed Stats */
+.date-range-picker {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-width: 200px; /* Wider for range picker */
+}
+
+.date-range-picker label {
+  font-size: 0.75rem;
+  font-weight: 500;
+  color: #94a3b8;
+  margin-bottom: 0.25rem;
+}
+
+.detail-date-picker {
+  min-width: 200px; /* Wider for range display */
+}
+
+.detail-date-picker.range-picker {
+  min-width: 240px; /* Extra width for range picker */
+}
+
+.detail-date-picker .p-datepicker-input {
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #475569;
+  border-radius: 6px;
+  background: #334155;
+  color: #f1f5f9;
+  font-size: 0.8rem;
+  transition: all 0.2s ease;
+  min-width: 200px;
+}
+
+.detail-date-picker.range-picker .p-datepicker-input {
+  min-width: 240px; /* Extra width for date range display */
+  text-align: center;
+}
+
+.detail-date-picker .p-datepicker-input:focus {
+  outline: none;
+  border-color: #10b981;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+}
+
+.detail-date-picker .p-datepicker-input:hover {
+  border-color: #10b981;
+}
+
+.detail-date-picker .p-datepicker-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+  background: #1e293b;
+}
+
+.detail-date-picker .p-datepicker-input-icon {
+  color: #94a3b8;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.8rem;
+}
+
+/* Range picker specific styling */
+.range-picker .p-datepicker {
+  min-width: 600px; /* Wider popup for dual month view */
+}
+
+/* Range selection styling in the popup */
+.p-datepicker .p-datepicker-date.p-datepicker-date-range {
+  background: rgba(16, 185, 129, 0.2) !important;
+  color: #10b981 !important;
+}
+
+.p-datepicker .p-datepicker-date.p-datepicker-date-range-start,
+.p-datepicker .p-datepicker-date.p-datepicker-date-range-end {
+  background: #10b981 !important;
+  color: white !important;
+  font-weight: 600;
+}
+
+.p-datepicker .p-datepicker-date.p-datepicker-date-range-start {
+  border-top-left-radius: 50%;
+  border-bottom-left-radius: 50%;
+}
+
+.p-datepicker .p-datepicker-date.p-datepicker-date-range-end {
+  border-top-right-radius: 50%;
+  border-bottom-right-radius: 50%;
+}
+
+/* Enhanced data selector for detailed stats */
+.data-selector {
+  display: flex;
+  align-items: flex-end;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+@media (max-width: 768px) {
+  .date-range-picker {
+    min-width: 160px;
+  }
+  
+  .detail-date-picker {
+    min-width: 160px;
+  }
+  
+  .detail-date-picker.range-picker {
+    min-width: 180px;
+  }
+  
+  .detail-date-picker .p-datepicker-input {
+    min-width: 160px;
+    font-size: 0.75rem;
+  }
+  
+  .detail-date-picker.range-picker .p-datepicker-input {
+    min-width: 180px;
+  }
+  
+  .range-picker .p-datepicker {
+    min-width: 350px; /* Smaller popup on mobile */
+  }
+
+  /* Stack date picker and button on mobile */
+  .data-selector {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .data-selector .refresh-btn {
+    margin-top: 1rem;
+    align-self: center;
+  }
+}
+
 .error-message {
   display: flex;
   align-items: center;
@@ -771,5 +908,56 @@
   }
   50% {
     opacity: 0.8;
+  }
+}
+
+/* Detailed Stats Section Specific Styles */
+.chart-container-inner {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: #334155;
+  border-radius: 8px;
+  border: 1px solid #475569;
+}
+
+.chart-container-inner .chart-wrapper {
+  position: relative;
+  height: 300px;
+  width: 100%;
+  display: block;
+}
+
+.chart-container-inner .chart-wrapper canvas {
+  border-radius: 6px;
+  display: block !important;
+  max-width: 100% !important;
+  height: auto !important;
+}
+
+/* Enhanced section spacing for detailed stats */
+.energy-section + .energy-section {
+  margin-top: 2.5rem;
+}
+
+/* Loading state for detailed charts */
+.chart-wrapper .loading-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  color: #6b7280;
+  font-size: 1rem;
+  background: linear-gradient(90deg, #f9fafb 25%, #e5e7eb 50%, #f9fafb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite;
+  border-radius: 8px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
   }
 }

@@ -40,6 +40,24 @@ interface PlantData {
   selfSufficiency: number; // Self sufficiency percentage
 }
 
+// New interfaces for detailed daily stats
+interface DetailedDeviceData {
+  date: string;
+  day: string;
+  value: number;
+  // Additional properties can be added based on API response
+}
+
+interface DetailedMeterData {
+  date: string;
+  day: string;
+  exportMain: number;
+  exportTariff2: number;
+  importMain: number;
+  importTariff2: number;
+  // Additional meter-specific properties can be added
+}
+
 interface DeviceResponse {
   deviceName: string;
   summary: Array<{
@@ -82,10 +100,20 @@ export class Dashboard implements OnInit, AfterViewInit {
   private readonly MONTH_STORAGE_KEY = 'global-home-month';
   private readonly YEAR_STORAGE_KEY = 'global-home-year';
 
+  // Detailed stats date range settings
+  detailedDateRange: Date[] = [new Date(2025, 8, 1), new Date(2025, 8, 10)]; // September 1-10, 2025
+  private readonly DETAILED_DATE_RANGE_KEY = 'global-home-detailed-date-range';
+
+  // Detailed stats loading states
+  isDetailedInverterLoading: boolean = false;
+  isDetailedMeterLoading: boolean = false;
+
   // Data storage keys
   private readonly INVERTER_DATA_KEY = 'global-home-inverter-data';
   private readonly METER_DATA_KEY = 'global-home-meter-data';
   private readonly PLANT_DATA_KEY = 'global-home-plant-data';
+  private readonly DETAILED_INVERTER_DATA_KEY = 'global-home-detailed-inverter-data';
+  private readonly DETAILED_METER_DATA_KEY = 'global-home-detailed-meter-data';
   
   // API configuration - Direct calls (CORS will be handled by server)
   private readonly API_BASE = 'http://192.168.1.180:7070/metrics/device';
@@ -158,6 +186,10 @@ export class Dashboard implements OnInit, AfterViewInit {
 
   // Plant data - starts empty, populated from server or storage
   plantData: PlantData[] = [];
+
+  // Detailed stats data
+  detailedInverterData: DetailedDeviceData[] = [];
+  detailedMeterData: DetailedMeterData[] = [];
 
   // Chart configuration
   public chartType = 'line' as const;
@@ -282,6 +314,94 @@ export class Dashboard implements OnInit, AfterViewInit {
         title: {
           display: true,
           text: 'Day of Month'
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Energy (kWh)'
+        }
+      }
+    }
+  };
+
+  // Detailed Inverter Chart Data
+  public detailedInverterChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
+  };
+
+  public detailedInverterChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Detailed Solar Production'
+      },
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => `Date: ${context[0].label}`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Date'
+        }
+      },
+      y: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Energy (kWh)'
+        }
+      }
+    }
+  };
+
+  // Detailed Meter Chart Data
+  public detailedMeterChartData: ChartData<'line'> = {
+    labels: [],
+    datasets: []
+  };
+
+  public detailedMeterChartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      title: {
+        display: true,
+        text: 'Detailed Grid Energy Flow'
+      },
+      legend: {
+        display: true,
+        position: 'top'
+      },
+      tooltip: {
+        enabled: true,
+        callbacks: {
+          title: (context) => `Date: ${context[0].label}`,
+          label: (context) => `${context.dataset.label}: ${context.parsed.y.toFixed(2)} kWh`
+        }
+      }
+    },
+    scales: {
+      x: {
+        display: true,
+        title: {
+          display: true,
+          text: 'Date'
         }
       },
       y: {
@@ -458,11 +578,16 @@ export class Dashboard implements OnInit, AfterViewInit {
     
     this.loadTokenFromStorage();
     this.loadDateSettingsFromStorage();
+    this.loadDetailedDateSettingsFromStorage();
     
     // Try to load stored data first
     const hasStoredInverterData = this.loadInverterDataFromStorage();
     const hasStoredMeterData = this.loadMeterDataFromStorage();
     const hasStoredPlantData = this.loadPlantDataFromStorage();
+    
+    // Load detailed stats data
+    this.loadDetailedInverterDataFromStorage();
+    this.loadDetailedMeterDataFromStorage();
     
     if (!hasStoredInverterData || !hasStoredMeterData || !hasStoredPlantData) {
       console.log('📁 No stored data found or data is outdated, using fallback data');
@@ -527,12 +652,14 @@ export class Dashboard implements OnInit, AfterViewInit {
     // Initialize all charts with loaded data
     console.log('📊 Initializing chart data...');
     this.updateAllCharts();
+    this.updateDetailedCharts();
     this.updateMetricCards();
     
     // Force a second update after a delay
     setTimeout(() => {
       console.log('📊 Force updating chart data again...');
       this.updateAllCharts();
+      this.updateDetailedCharts();
     }, 500);
   }
 
@@ -543,6 +670,7 @@ export class Dashboard implements OnInit, AfterViewInit {
     setTimeout(() => {
       console.log('🔧 Force updating charts after view init...');
       this.updateAllCharts();
+      this.updateDetailedCharts();
       if (this.chart) {
         this.chart.update();
         console.log('✅ Chart update called');
@@ -593,6 +721,28 @@ export class Dashboard implements OnInit, AfterViewInit {
     const month = parseInt(this.currentMonth, 10) - 1; // Convert to 0-indexed month
     const year = parseInt(this.currentYear, 10);
     this.selectedDate = new Date(year, month);
+  }
+
+  private loadDetailedDateSettingsFromStorage() {
+    const savedDateRange = localStorage.getItem(this.DETAILED_DATE_RANGE_KEY);
+    
+    if (savedDateRange) {
+      try {
+        const parsedRange = JSON.parse(savedDateRange);
+        if (parsedRange && Array.isArray(parsedRange) && parsedRange.length === 2) {
+          this.detailedDateRange = [new Date(parsedRange[0]), new Date(parsedRange[1])];
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse stored date range:', error);
+      }
+    }
+  }
+
+  private saveDetailedDateSettingsToStorage(dateRange: Date[]) {
+    if (dateRange && dateRange.length === 2) {
+      localStorage.setItem(this.DETAILED_DATE_RANGE_KEY, JSON.stringify([dateRange[0].toISOString(), dateRange[1].toISOString()]));
+      this.detailedDateRange = dateRange;
+    }
   }
 
   private saveDateSettingsToStorage(month: string, year: string) {
@@ -686,6 +836,64 @@ export class Dashboard implements OnInit, AfterViewInit {
     } catch (error) {
       console.error('❌ Failed to load plant data from storage:', error);
       return false;
+    }
+  }
+
+  private loadDetailedInverterDataFromStorage(): boolean {
+    try {
+      const storedData = localStorage.getItem(this.DETAILED_INVERTER_DATA_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        this.detailedInverterData = parsedData.data;
+        console.log('📁 Loaded detailed inverter data from storage:', this.detailedInverterData.length, 'items');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Failed to load detailed inverter data from storage:', error);
+      return false;
+    }
+  }
+
+  private loadDetailedMeterDataFromStorage(): boolean {
+    try {
+      const storedData = localStorage.getItem(this.DETAILED_METER_DATA_KEY);
+      if (storedData) {
+        const parsedData = JSON.parse(storedData);
+        this.detailedMeterData = parsedData.data;
+        console.log('📁 Loaded detailed meter data from storage:', this.detailedMeterData.length, 'items');
+        return true;
+      }
+      return false;
+    } catch (error) {
+      console.error('❌ Failed to load detailed meter data from storage:', error);
+      return false;
+    }
+  }
+
+  private saveDetailedInverterDataToStorage() {
+    try {
+      const dataToStore = {
+        data: this.detailedInverterData,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(this.DETAILED_INVERTER_DATA_KEY, JSON.stringify(dataToStore));
+      console.log('💾 Detailed inverter data saved to storage:', dataToStore.data.length, 'items');
+    } catch (error) {
+      console.error('❌ Failed to save detailed inverter data to storage:', error);
+    }
+  }
+
+  private saveDetailedMeterDataToStorage() {
+    try {
+      const dataToStore = {
+        data: this.detailedMeterData,
+        timestamp: Date.now()
+      };
+      localStorage.setItem(this.DETAILED_METER_DATA_KEY, JSON.stringify(dataToStore));
+      console.log('💾 Detailed meter data saved to storage:', dataToStore.data.length, 'items');
+    } catch (error) {
+      console.error('❌ Failed to save detailed meter data to storage:', error);
     }
   }
 
@@ -922,6 +1130,21 @@ export class Dashboard implements OnInit, AfterViewInit {
     return `${monthNames[monthIndex]} ${this.currentYear}`;
   }
 
+  get detailedDateRangeText(): string {
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+    
+    if (this.detailedDateRange && this.detailedDateRange.length === 2) {
+      return `${formatDate(this.detailedDateRange[0])} - ${formatDate(this.detailedDateRange[1])}`;
+    }
+    return 'No date range selected';
+  }
+
   onDatePickerChange(selectedDate: Date | null) {
     if (selectedDate) {
       this.selectedDate = selectedDate;
@@ -937,6 +1160,14 @@ export class Dashboard implements OnInit, AfterViewInit {
       
       // Try to load stored data for the new month/year
       this.loadDataForNewDate();
+    }
+  }
+
+  onDetailedDateRangeChange(selectedDateRange: Date[] | null) {
+    if (selectedDateRange && selectedDateRange.length === 2 && selectedDateRange[0] && selectedDateRange[1]) {
+      this.detailedDateRange = selectedDateRange;
+      this.saveDetailedDateSettingsToStorage(selectedDateRange);
+      console.log('📅 Detailed date range changed to:', this.detailedDateRangeText);
     }
   }
 
@@ -1554,6 +1785,12 @@ export class Dashboard implements OnInit, AfterViewInit {
     }, 10);
   }
 
+  updateDetailedCharts() {
+    console.log('📊 Updating detailed charts...');
+    this.updateDetailedInverterChart();
+    this.updateDetailedMeterChart();
+  }
+
   private updateInverterChart() {
     console.log('🔧 Updating inverter chart with data:', this.inverterData);
     
@@ -1794,5 +2031,312 @@ export class Dashboard implements OnInit, AfterViewInit {
     } else {
       console.log('✅ Plant chart should render with', finalDatasetCount, 'datasets');
     }
+  }
+
+  private updateDetailedInverterChart() {
+    console.log('🔧 Updating detailed inverter chart with data:', this.detailedInverterData);
+    
+    const labels = this.detailedInverterData.map(item => item.day);
+    const values = this.detailedInverterData.map(item => item.value);
+    
+    console.log('📊 Detailed inverter chart labels:', labels);
+    console.log('📊 Detailed inverter chart values:', values);
+
+    this.detailedInverterChartData = {
+      labels: labels,
+      datasets: [
+        {
+          label: 'Detailed Solar Production',
+          data: values,
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(34, 197, 94)',
+          pointBorderColor: 'rgb(34, 197, 94)',
+          pointHoverBackgroundColor: 'rgb(22, 163, 74)',
+          pointHoverBorderColor: 'rgb(22, 163, 74)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      ]
+    };
+
+    this.detailedInverterChartOptions.plugins!.title!.text = `Detailed Solar Production - ${this.detailedDateRangeText}`;
+    console.log('✅ Detailed inverter chart data updated:', this.detailedInverterChartData);
+  }
+
+  private updateDetailedMeterChart() {
+    console.log('🔧 Updating detailed meter chart with data:', this.detailedMeterData);
+    
+    const labels = this.detailedMeterData.map(item => item.day);
+    console.log('📊 Detailed meter chart labels:', labels);
+
+    // Helper function to check if dataset has meaningful data (not all zeros)
+    const hasData = (values: number[]) => values.some(value => value > 0);
+
+    // Prepare all possible datasets
+    const potentialDatasets = [
+      {
+        condition: hasData(this.detailedMeterData.map(item => item.exportMain)),
+        dataset: {
+          label: 'Export Whole Home (All Phases)',
+          data: this.detailedMeterData.map(item => item.exportMain),
+          borderColor: 'rgb(16, 185, 129)', // Teal for export
+          backgroundColor: 'rgba(16, 185, 129, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(16, 185, 129)',
+          pointBorderColor: 'rgb(16, 185, 129)',
+          pointHoverBackgroundColor: 'rgb(5, 150, 105)',
+          pointHoverBorderColor: 'rgb(5, 150, 105)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: hasData(this.detailedMeterData.map(item => item.exportTariff2)),
+        dataset: {
+          label: 'Export Single Phase',
+          data: this.detailedMeterData.map(item => item.exportTariff2),
+          borderColor: 'rgb(52, 211, 153)', // Light teal for single phase export
+          backgroundColor: 'rgba(52, 211, 153, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(52, 211, 153)',
+          pointBorderColor: 'rgb(52, 211, 153)',
+          pointHoverBackgroundColor: 'rgb(20, 184, 166)',
+          pointHoverBorderColor: 'rgb(20, 184, 166)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,
+          borderDash: [5, 5] // Dashed line for single phase
+        }
+      },
+      {
+        condition: hasData(this.detailedMeterData.map(item => item.importMain)),
+        dataset: {
+          label: 'Import Whole Home (All Phases)',
+          data: this.detailedMeterData.map(item => item.importMain),
+          borderColor: 'rgb(239, 68, 68)', // Red for import
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(239, 68, 68)',
+          pointBorderColor: 'rgb(239, 68, 68)',
+          pointHoverBackgroundColor: 'rgb(220, 38, 38)',
+          pointHoverBorderColor: 'rgb(220, 38, 38)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: hasData(this.detailedMeterData.map(item => item.importTariff2)),
+        dataset: {
+          label: 'Import Single Phase',
+          data: this.detailedMeterData.map(item => item.importTariff2),
+          borderColor: 'rgb(249, 115, 22)', // Orange for single phase import
+          backgroundColor: 'rgba(249, 115, 22, 0.1)',
+          fill: true,
+          tension: 0.4,
+          pointBackgroundColor: 'rgb(249, 115, 22)',
+          pointBorderColor: 'rgb(249, 115, 22)',
+          pointHoverBackgroundColor: 'rgb(234, 88, 12)',
+          pointHoverBorderColor: 'rgb(234, 88, 12)',
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,
+          borderDash: [5, 5] // Dashed line for single phase
+        }
+      }
+    ];
+
+    // Filter datasets to only include those with meaningful data
+    const validDatasets = potentialDatasets
+      .filter(item => item.condition)
+      .map(item => item.dataset);
+
+    console.log('📊 Filtered detailed datasets (excluding all-zero data):', validDatasets.length, 'out of', potentialDatasets.length);
+
+    this.detailedMeterChartData = {
+      labels: labels,
+      datasets: validDatasets
+    };
+
+    this.detailedMeterChartOptions.plugins!.title!.text = `Detailed Grid Energy Flow - ${this.detailedDateRangeText}`;
+    console.log('✅ Detailed meter chart data updated with meaningful data only:', this.detailedMeterChartData);
+  }
+
+  // Helper method to format date for API calls
+  private formatDateForApi(date: Date): string {
+    const day = date.getDate().toString().padStart(2, '0');
+    const month = (date.getMonth() + 1).toString().padStart(2, '0');
+    const year = date.getFullYear();
+    return `${day}-${month}-${year}`;
+  }
+
+  async refreshDetailedData() {
+    console.log('🚀 Starting detailed data refresh...');
+    console.log('🔑 Token available:', this.hasValidToken);
+    
+    // Check if we have a valid token, if not prompt for it
+    if (!this.hasValidToken) {
+      console.log('❌ No valid token, prompting user...');
+      await this.promptForToken();
+    }
+    
+    // If still no valid token, don't proceed
+    if (!this.hasValidToken) {
+      this.errorMessage = 'API token is required to fetch data.';
+      console.log('❌ Still no token after prompt, aborting...');
+      return;
+    }
+    
+    this.isDetailedInverterLoading = true;
+    this.isDetailedMeterLoading = true;
+    this.errorMessage = '';
+    console.log('⏳ Starting detailed API calls...');
+    
+    try {
+      await Promise.all([
+        this.fetchDetailedInverterData(),
+        this.fetchDetailedMeterData()
+      ]);
+      
+      // Save fetched data to localStorage
+      this.saveDetailedInverterDataToStorage();
+      this.saveDetailedMeterDataToStorage();
+      
+      this.updateDetailedCharts();
+      console.log('✅ Detailed data refresh completed successfully!');
+    } catch (error: any) {
+      console.log('❌ Detailed data refresh failed:', error);
+      
+      if (error.status === 0) {
+        this.errorMessage = 'CORS Error: Cannot connect to server. Check if CORS is properly configured on the server.';
+      } else if (error.status === 401 || error.status === 403) {
+        this.errorMessage = 'Authentication failed. Please check your API token.';
+      } else {
+        this.errorMessage = `Failed to fetch detailed data. Server returned: ${error.status} - ${error.statusText}`;
+      }
+      console.error('Error fetching detailed data:', error);
+    } finally {
+      this.isDetailedInverterLoading = false;
+      this.isDetailedMeterLoading = false;
+    }
+  }
+
+  private async fetchDetailedInverterData() {
+    try {
+      if (!this.detailedDateRange || this.detailedDateRange.length !== 2) {
+        throw new Error('Invalid date range selected');
+      }
+      
+      const startDate = this.formatDateForApi(this.detailedDateRange[0]);
+      const endDate = this.formatDateForApi(this.detailedDateRange[1]);
+      const url = `http://192.168.1.180:7070/metrics/device/INVERTER/detailed?start=${startDate}&end=${endDate}`;
+      console.log('🔄 Fetching detailed INVERTER data from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Global-Home-Token': this.authToken
+        },
+        mode: 'cors'
+      });
+      
+      console.log('📥 Detailed INVERTER response status:', response.status);
+      console.log('📥 Detailed INVERTER response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Detailed INVERTER response body:', data);
+      
+      if (data && data.summary) {
+        this.detailedInverterData = this.transformDetailedInverterData(data);
+        console.log('📊 Detailed INVERTER data transformed:', this.detailedInverterData);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching detailed inverter data:', error);
+      throw error;
+    }
+  }
+
+  private async fetchDetailedMeterData() {
+    try {
+      if (!this.detailedDateRange || this.detailedDateRange.length !== 2) {
+        throw new Error('Invalid date range selected');
+      }
+      
+      const startDate = this.formatDateForApi(this.detailedDateRange[0]);
+      const endDate = this.formatDateForApi(this.detailedDateRange[1]);
+      const url = `http://192.168.1.180:7070/metrics/device/METER/detailed?start=${startDate}&end=${endDate}`;
+      console.log('🔄 Fetching detailed METER data from:', url);
+      
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Global-Home-Token': this.authToken
+        },
+        mode: 'cors'
+      });
+      
+      console.log('📥 Detailed METER response status:', response.status);
+      console.log('📥 Detailed METER response ok:', response.ok);
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const data = await response.json();
+      console.log('✅ Detailed METER response body:', data);
+      
+      if (data && data.summary) {
+        this.detailedMeterData = this.transformDetailedMeterData(data);
+        console.log('📊 Detailed METER data transformed:', this.detailedMeterData);
+      }
+    } catch (error: any) {
+      console.error('❌ Error fetching detailed meter data:', error);
+      throw error;
+    }
+  }
+
+  private transformDetailedInverterData(response: DeviceResponse): DetailedDeviceData[] {
+    return response.summary.map(item => {
+      const date = new Date(item.date);
+      const dayNumber = date.getDate().toString().padStart(2, '0');
+      
+      // Use the correct property name from the actual API response
+      const energyValue = item.paramsSummary?.production_kwh_ || 0;
+      
+      return {
+        date: item.date,
+        value: energyValue,
+        day: dayNumber
+      };
+    });
+  }
+
+  private transformDetailedMeterData(response: DeviceResponse): DetailedMeterData[] {
+    return response.summary.map(item => {
+      const date = new Date(item.date);
+      const dayNumber = date.getDate().toString().padStart(2, '0');
+      
+      // Transform API response to match DetailedMeterData interface
+      return {
+        date: item.date,
+        day: dayNumber,
+        exportMain: item.paramsSummary?.total_negative_energy_kwh_ || 0,
+        exportTariff2: item.paramsSummary?.total_negative_energy_2_kwh_ || 0,
+        importMain: item.paramsSummary?.total_positive_energy_kwh_ || 0,
+        importTariff2: item.paramsSummary?.total_positive_energy_2_kwh_ || 0
+      };
+    });
   }
 }

@@ -1,18 +1,18 @@
 meta {
-  name: daily device stats
+  name: detailed device stats
   type: http
-  seq: 1
+  seq: 4
 }
 
 get {
-  url: http://192.168.1.180:7070/metrics/device/INVERTER/daily?month=09&year=2025
+  url: http://192.168.1.180:7070/metrics/device/INVERTER/detailed?start=01-09-2025&end=10-09-2025
   body: none
   auth: inherit
 }
 
 params:query {
-  month: 09
-  year: 2025
+  start: 01-09-2025
+  end: 10-09-2025
 }
 
 headers {

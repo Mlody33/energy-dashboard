@@ -191,4 +191,109 @@
     </div>
   </div>
 
+  <!-- Detailed Daily Stats Section - Separate Group of Charts -->
+  <div class="content-section energy-section">
+    <div class="section-header">
+      <div class="section-info">
+        <h3>📈 Detailed Daily Statistics</h3>
+        <p>Detailed METER and INVERTER daily statistics with custom date range - {{ detailedDateRangeText }}</p>
+      </div>
+      <div class="data-selector">
+        <div class="date-range-picker">
+          <label>Date Range:</label>
+          <p-datepicker 
+            [(ngModel)]="detailedDateRange" 
+            (ngModelChange)="onDetailedDateRangeChange($event)"
+            selectionMode="range"
+            dateFormat="dd/mm/yy" 
+            [readonlyInput]="true"
+            [disabled]="isDetailedInverterLoading || isDetailedMeterLoading"
+            placeholder="Select Date Range"
+            class="detail-date-picker range-picker"
+            [showIcon]="true"
+            iconDisplay="input"
+            title="Select Date Range"
+            [numberOfMonths]="2">
+          </p-datepicker>
+        </div>
+        <button class="refresh-btn" (click)="refreshDetailedData()" [disabled]="isDetailedInverterLoading || isDetailedMeterLoading" title="Refresh Detailed Data">
+          <i class="pi" [class.pi-refresh]="!isDetailedInverterLoading && !isDetailedMeterLoading" [class.pi-spin]="isDetailedInverterLoading || isDetailedMeterLoading" [class.pi-spinner]="isDetailedInverterLoading || isDetailedMeterLoading"></i>
+          <span>{{ (isDetailedInverterLoading || isDetailedMeterLoading) ? 'Loading...' : 'Refresh Detailed' }}</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Detailed Inverter Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>☀️ Detailed INVERTER Data</h4>
+          <p>Detailed daily solar energy production from inverter with date range</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="isDetailedInverterLoading" title="Refresh Detailed Inverter Data">
+            <i class="pi" [class.pi-refresh]="!isDetailedInverterLoading" [class.pi-spin]="isDetailedInverterLoading" [class.pi-spinner]="isDetailedInverterLoading"></i>
+            <span>{{ isDetailedInverterLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
+          @if (detailedInverterChartData.datasets && detailedInverterChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="detailedInverterChartData"
+              [options]="detailedInverterChartOptions"
+              [type]="chartType"
+              width="800"
+              height="300"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Detailed inverter data is being prepared...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Meter Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>⚡ Detailed METER Data</h4>
+          <p>Detailed daily grid energy import/export measurements with date range</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="isDetailedMeterLoading" title="Refresh Detailed Meter Data">
+            <i class="pi" [class.pi-refresh]="!isDetailedMeterLoading" [class.pi-spin]="isDetailedMeterLoading" [class.pi-spinner]="isDetailedMeterLoading"></i>
+            <span>{{ isDetailedMeterLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
+          @if (detailedMeterChartData.datasets && detailedMeterChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="detailedMeterChartData"
+              [options]="detailedMeterChartOptions"
+              [type]="chartType"
+              width="800"
+              height="300"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Detailed meter data is being prepared...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
