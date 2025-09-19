@@ -127,7 +127,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportMain)),
         dataset: {
-          label: 'Export Whole Home (All Phases)',
+          label: '🔌 Grid Export',
           data: data.map(item => item.exportMain),
           borderColor: this.colors.exportMain,
           backgroundColor: 'rgba(34, 197, 94, 0.1)',
@@ -145,7 +145,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportTariff2)),
         dataset: {
-          label: 'Export Single Phase',
+          label: '🏠 Home Export',
           data: data.map(item => item.exportTariff2),
           borderColor: this.colors.exportTariff2,
           backgroundColor: 'rgba(132, 204, 22, 0.1)',
@@ -164,7 +164,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importMain)),
         dataset: {
-          label: 'Import Whole Home (All Phases)',
+          label: '🔌 Grid Import',
           data: data.map(item => item.importMain),
           borderColor: this.colors.importMain,
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -182,7 +182,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importTariff2)),
         dataset: {
-          label: 'Import Single Phase',
+          label: '🏠 Home Import',
           data: data.map(item => item.importTariff2),
           borderColor: this.colors.importTariff2,
           backgroundColor: 'rgba(249, 115, 22, 0.1)',
@@ -324,7 +324,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportMain)),
         dataset: {
-          label: 'Export Total (All Phases)',
+          label: '🔌 Grid Export',
           data: data.map(item => item.exportMain),
           borderColor: 'rgb(16, 185, 129)',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
@@ -340,7 +340,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importMain)),
         dataset: {
-          label: 'Import Total (All Phases)',
+          label: '🔌 Grid Import',
           data: data.map(item => item.importMain),
           borderColor: 'rgb(239, 68, 68)',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -356,7 +356,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importTariff2)),
         dataset: {
-          label: 'Import Tariff 2',
+          label: '🏠 Home Import',
           data: data.map(item => item.importTariff2),
           borderColor: 'rgb(168, 85, 247)',
           backgroundColor: 'rgba(168, 85, 247, 0.1)',
@@ -390,11 +390,11 @@ export class ChartService {
     const labels = data.map(item => item.day);
 
     const potentialDatasets = [
-      // === GRID EXPORT (CT1-3: Grid phases measuring export to grid) ===
+      // === GRID EXPORT (CT1-3: Grid connection points by floor measuring export to grid) ===
       {
         condition: this.hasData(data.map(item => item.exportCT1)),
         dataset: {
-          label: '🔌 Grid Export CT1 (Phase 1)',
+          label: '🔌 Grid Export CT1 (1st Floor)',
           data: data.map(item => item.exportCT1),
           borderColor: 'rgb(34, 197, 94)',
           backgroundColor: 'rgba(34, 197, 94, 0.05)',
@@ -408,7 +408,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportCT2)),
         dataset: {
-          label: '🔌 Grid Export CT2 (Phase 2)',
+          label: '🔌 Grid Export CT2 (2nd Floor)',
           data: data.map(item => item.exportCT2),
           borderColor: 'rgb(52, 211, 153)',
           backgroundColor: 'rgba(52, 211, 153, 0.05)',
@@ -422,7 +422,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportCT3)),
         dataset: {
-          label: '🔌 Grid Export CT3 (Phase 3)',
+          label: '🔌 Grid Export CT3 (Basement)',
           data: data.map(item => item.exportCT3),
           borderColor: 'rgb(20, 184, 166)',
           backgroundColor: 'rgba(20, 184, 166, 0.05)',
@@ -433,11 +433,11 @@ export class ChartService {
           borderWidth: 3
         }
       },
-      // === GRID IMPORT (CT1-3: Grid phases measuring import from grid) ===
+      // === GRID IMPORT (CT1-3: Grid connection points by floor measuring import from grid) ===
       {
         condition: this.hasData(data.map(item => item.importCT1)),
         dataset: {
-          label: '🔌 Grid Import CT1 (Phase 1)',
+          label: '🔌 Grid Import CT1 (1st Floor)',
           data: data.map(item => item.importCT1),
           borderColor: 'rgb(220, 38, 38)',
           backgroundColor: 'rgba(220, 38, 38, 0.05)',
@@ -451,7 +451,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importCT2)),
         dataset: {
-          label: '🔌 Grid Import CT2 (Phase 2)',
+          label: '🔌 Grid Import CT2 (2nd Floor)',
           data: data.map(item => item.importCT2),
           borderColor: 'rgb(248, 113, 113)',
           backgroundColor: 'rgba(248, 113, 113, 0.05)',
@@ -465,7 +465,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importCT3)),
         dataset: {
-          label: '🔌 Grid Import CT3 (Phase 3)',
+          label: '🔌 Grid Import CT3 (Basement)',
           data: data.map(item => item.importCT3),
           backgroundColor: 'rgba(252, 165, 165, 0.05)',
           borderColor: 'rgb(252, 165, 165)',
@@ -476,11 +476,11 @@ export class ChartService {
           borderWidth: 3
         }
       },
-      // === HOME CONSUMPTION (CT4-6: Home phases measuring actual home usage) ===
+      // === HOME CONSUMPTION (CT4-6: Home consumption by floor measuring actual home usage) ===
       {
         condition: this.hasData(data.map(item => item.importCT4)),
         dataset: {
-          label: '🏠 Home Usage CT4 (Phase 1)',
+          label: '🏠 1st Floor Consumption CT4',
           data: data.map(item => item.importCT4),
           borderColor: 'rgb(239, 68, 68)',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
@@ -495,7 +495,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importCT5)),
         dataset: {
-          label: '🏠 Home Usage CT5 (Phase 2)',
+          label: '🏠 2nd Floor Consumption CT5',
           data: data.map(item => item.importCT5),
           borderColor: 'rgb(220, 38, 127)',
           backgroundColor: 'rgba(220, 38, 127, 0.1)',
@@ -510,7 +510,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importCT6)),
         dataset: {
-          label: '🏠 Home Usage CT6 (Phase 3)',
+          label: '🏠 Basement Consumption CT6',
           data: data.map(item => item.importCT6),
           borderColor: 'rgb(185, 28, 28)',
           backgroundColor: 'rgba(185, 28, 28, 0.1)',
@@ -522,11 +522,11 @@ export class ChartService {
           borderDash: [6, 4]  // Dashed line for home usage
         }
       },
-      // === HOME EXPORT (CT4-6: Home phases - usually minimal export) ===
+      // === HOME EXPORT (CT4-6: Home export by floor - usually minimal export) ===
       {
         condition: this.hasData(data.map(item => item.exportCT4)),
         dataset: {
-          label: '🏠 Home Export CT4 (Phase 1)',
+          label: '🏠 1st Floor Export CT4',
           data: data.map(item => item.exportCT4),
           borderColor: 'rgb(101, 163, 13)',
           backgroundColor: 'rgba(101, 163, 13, 0.05)',
@@ -540,7 +540,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportCT5)),
         dataset: {
-          label: '🏠 Home Export CT5 (Phase 2)',
+          label: '🏠 2nd Floor Export CT5',
           data: data.map(item => item.exportCT5),
           borderColor: 'rgb(132, 204, 22)',
           backgroundColor: 'rgba(132, 204, 22, 0.05)',
@@ -554,7 +554,7 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.exportCT6)),
         dataset: {
-          label: '🏠 Home Export CT6 (Phase 3)',
+          label: '🏠 Basement Export CT6',
           data: data.map(item => item.exportCT6),
           borderColor: 'rgb(163, 230, 53)',
           backgroundColor: 'rgba(163, 230, 53, 0.05)',
@@ -565,11 +565,11 @@ export class ChartService {
           borderWidth: 3
         }
       },
-      // Export Tariff 2 (remaining tariff data for CT breakdown chart)
+      // Home Export (_2 suffix indicates home usage)
       {
         condition: this.hasData(data.map(item => item.exportTariff2)),
         dataset: {
-          label: 'Export Tariff 2',
+          label: '🏠 Home Export',
           data: data.map(item => item.exportTariff2),
           borderColor: 'rgb(22, 163, 74)',
           backgroundColor: 'rgba(22, 163, 74, 0.1)',

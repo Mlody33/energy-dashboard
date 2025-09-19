@@ -46,19 +46,19 @@ export interface DetailedMeterData {
   exportTariff2: number;    // daily_negative_energy_2_kwh_
   importMain: number;       // daily_positive_energy_kwh_
   importTariff2: number;    // daily_positive_energy_2_kwh_
-  // Individual CT (Current Transformer) readings
-  exportCT1: number;        // daily_negative_energy_ct1_kwh_
-  exportCT2: number;        // daily_negative_energy_ct2_kwh_
-  exportCT3: number;        // daily_negative_energy_ct3_kwh_
-  exportCT4: number;        // daily_negative_energy_ct4_kwh_
-  exportCT5: number;        // daily_negative_energy_ct5_kwh_
-  exportCT6: number;        // daily_negative_energy_ct6_kwh_
-  importCT1: number;        // daily_positive_energy_ct1_kwh_
-  importCT2: number;        // daily_positive_energy_ct2_kwh_
-  importCT3: number;        // daily_positive_energy_ct3_kwh_
-  importCT4: number;        // daily_positive_energy_ct4_kwh_
-  importCT5: number;        // daily_positive_energy_ct5_kwh_
-  importCT6: number;        // daily_positive_energy_ct6_kwh_
+  // Individual CT (Current Transformer) readings by floor location
+  exportCT1: number;        // daily_negative_energy_ct1_kwh_ - Grid export 1st Floor
+  exportCT2: number;        // daily_negative_energy_ct2_kwh_ - Grid export 2nd Floor  
+  exportCT3: number;        // daily_negative_energy_ct3_kwh_ - Grid export Basement
+  exportCT4: number;        // daily_negative_energy_ct4_kwh_ - Home export 1st Floor
+  exportCT5: number;        // daily_negative_energy_ct5_kwh_ - Home export 2nd Floor
+  exportCT6: number;        // daily_negative_energy_ct6_kwh_ - Home export Basement
+  importCT1: number;        // daily_positive_energy_ct1_kwh_ - Grid import 1st Floor
+  importCT2: number;        // daily_positive_energy_ct2_kwh_ - Grid import 2nd Floor
+  importCT3: number;        // daily_positive_energy_ct3_kwh_ - Grid import Basement
+  importCT4: number;        // daily_positive_energy_ct4_kwh_ - Home consumption 1st Floor
+  importCT5: number;        // daily_positive_energy_ct5_kwh_ - Home consumption 2nd Floor
+  importCT6: number;        // daily_positive_energy_ct6_kwh_ - Home consumption Basement
 }
 
 export interface DetailedPlantData {

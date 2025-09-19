@@ -123,7 +123,7 @@
       <div class="subsection-header">
         <div class="subsection-info">
           <h4>⚡ Grid Energy Flow</h4>
-          <p>Daily grid energy import/export measurements</p>
+          <p>Daily grid energy import/export measurements and home usage</p>
         </div>
         <div class="subsection-actions">
           <button class="refresh-btn secondary" (click)="refreshMeterData()" [disabled]="appState.loading.isMeterLoading" title="Refresh Meter Data">
@@ -264,7 +264,7 @@
       <div class="subsection-header">
         <div class="subsection-info">
           <h4>⚡ Detailed METER Summary</h4>
-          <p>Main energy totals - Export Total, Import Total, and Import Tariff 2</p>
+          <p>Main energy totals - Grid Export, Grid Import, and Home Import</p>
         </div>
         <div class="subsection-actions">
           <button class="refresh-btn secondary" (click)="refreshDetailedMeterData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">
@@ -300,7 +300,7 @@
       <div class="subsection-header">
         <div class="subsection-info">
           <h4>⚡ Detailed METER CT Breakdown</h4>
-          <p>Individual CT readings: 🔌 CT1-3 (Grid phases), 🏠 CT4-6 (Home consumption phases), plus Export Tariff 2</p>
+          <p>Individual CT readings by floor: 🔌 CT1-3 Grid (1st Floor/2nd Floor/Basement), 🏠 CT4-6 Home (1st Floor/2nd Floor/Basement), plus Home Export</p>
         </div>
         <div class="subsection-actions">
           <button class="refresh-btn secondary" (click)="refreshDetailedMeterData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">

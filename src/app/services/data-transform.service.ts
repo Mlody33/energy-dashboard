@@ -252,8 +252,8 @@ export class DataTransformService {
       
       console.log(`📊 Day ${dayNumber}:`);
       console.log(`   Main: Export=${exportMain}/${exportTariff2}, Import=${importMain}/${importTariff2}`);
-      console.log(`   CT Export: [${exportCT1}, ${exportCT2}, ${exportCT3}, ${exportCT4}, ${exportCT5}, ${exportCT6}]`);
-      console.log(`   CT Import: [${importCT1}, ${importCT2}, ${importCT3}, ${importCT4}, ${importCT5}, ${importCT6}]`);
+      console.log(`   CT Export - Grid: [1st:${exportCT1}, 2nd:${exportCT2}, Basement:${exportCT3}], Home: [1st:${exportCT4}, 2nd:${exportCT5}, Basement:${exportCT6}]`);
+      console.log(`   CT Import - Grid: [1st:${importCT1}, 2nd:${importCT2}, Basement:${importCT3}], Home: [1st:${importCT4}, 2nd:${importCT5}, Basement:${importCT6}]`);
       
       return {
         date: item.date,
