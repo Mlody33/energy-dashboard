@@ -5,6 +5,7 @@ import {
   PlantData, 
   DetailedDeviceData, 
   DetailedMeterData,
+  DetailedPlantData,
   StoredData 
 } from '../models';
 
@@ -17,11 +18,13 @@ export class StorageService {
   private readonly MONTH_STORAGE_KEY = 'global-home-month';
   private readonly YEAR_STORAGE_KEY = 'global-home-year';
   private readonly DETAILED_DATE_RANGE_KEY = 'global-home-detailed-date-range';
+  private readonly DETAILED_PLANT_DATE_KEY = 'global-home-detailed-plant-date';
   private readonly INVERTER_DATA_KEY = 'global-home-inverter-data';
   private readonly METER_DATA_KEY = 'global-home-meter-data';
   private readonly PLANT_DATA_KEY = 'global-home-plant-data';
   private readonly DETAILED_INVERTER_DATA_KEY = 'global-home-detailed-inverter-data';
   private readonly DETAILED_METER_DATA_KEY = 'global-home-detailed-meter-data';
+  private readonly DETAILED_PLANT_DATA_KEY = 'global-home-detailed-plant-data';
 
   constructor() {}
 
@@ -83,6 +86,25 @@ export class StorageService {
         dateRange[1].toISOString()
       ]);
       localStorage.setItem(this.DETAILED_DATE_RANGE_KEY, serialized);
+    }
+  }
+
+  // Detailed Plant Date (single date)
+  getDetailedPlantDate(): Date | null {
+    const storedDate = localStorage.getItem(this.DETAILED_PLANT_DATE_KEY);
+    if (storedDate) {
+      try {
+        return new Date(storedDate);
+      } catch (error) {
+        console.error('Failed to parse stored plant date:', error);
+      }
+    }
+    return null;
+  }
+
+  setDetailedPlantDate(date: Date): void {
+    if (date) {
+      localStorage.setItem(this.DETAILED_PLANT_DATE_KEY, date.toISOString());
     }
   }
 
@@ -159,6 +181,15 @@ export class StorageService {
     return this.loadData<DetailedMeterData>(this.DETAILED_METER_DATA_KEY, 'detailed meter data');
   }
 
+  // Detailed Plant Data
+  storeDetailedPlantData(data: DetailedPlantData[]): void {
+    this.storeData(this.DETAILED_PLANT_DATA_KEY, data, 'detailed plant data');
+  }
+
+  loadDetailedPlantData(): DetailedPlantData[] | null {
+    return this.loadData<DetailedPlantData>(this.DETAILED_PLANT_DATA_KEY, 'detailed plant data');
+  }
+
   // Utility Methods
   clearAllData(): void {
     const keys = [
@@ -166,7 +197,8 @@ export class StorageService {
       this.METER_DATA_KEY,
       this.PLANT_DATA_KEY,
       this.DETAILED_INVERTER_DATA_KEY,
-      this.DETAILED_METER_DATA_KEY
+      this.DETAILED_METER_DATA_KEY,
+      this.DETAILED_PLANT_DATA_KEY
     ];
     
     keys.forEach(key => localStorage.removeItem(key));
@@ -177,7 +209,8 @@ export class StorageService {
     const keys = [
       this.MONTH_STORAGE_KEY,
       this.YEAR_STORAGE_KEY,
-      this.DETAILED_DATE_RANGE_KEY
+      this.DETAILED_DATE_RANGE_KEY,
+      this.DETAILED_PLANT_DATE_KEY
     ];
     
     keys.forEach(key => localStorage.removeItem(key));

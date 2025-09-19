@@ -6,6 +6,7 @@ import {
   PlantData, 
   DetailedDeviceData, 
   DetailedMeterData,
+  DetailedPlantData,
   MetricCard,
   LoadingStates,
   AppState
@@ -26,7 +27,8 @@ export class EnergyService {
       isMeterLoading: false,
       isPlantLoading: false,
       isDetailedInverterLoading: false,
-      isDetailedMeterLoading: false
+      isDetailedMeterLoading: false,
+      isDetailedPlantLoading: false
     },
     error: '',
     showRefreshReminder: false,
@@ -34,6 +36,7 @@ export class EnergyService {
     currentYear: '2025',
     selectedDate: new Date(2025, 8),
     detailedDateRange: [new Date(2025, 8, 1), new Date(2025, 8, 10)],
+    detailedPlantDate: new Date(2025, 8, 31),
     authToken: ''
   });
 
@@ -43,6 +46,7 @@ export class EnergyService {
   private plantDataSubject = new BehaviorSubject<PlantData[]>([]);
   private detailedInverterDataSubject = new BehaviorSubject<DetailedDeviceData[]>([]);
   private detailedMeterDataSubject = new BehaviorSubject<DetailedMeterData[]>([]);
+  private detailedPlantDataSubject = new BehaviorSubject<DetailedPlantData[]>([]);
   private metricCardsSubject = new BehaviorSubject<MetricCard[]>([]);
 
   // Public Observables
@@ -52,6 +56,7 @@ export class EnergyService {
   public plantData$ = this.plantDataSubject.asObservable();
   public detailedInverterData$ = this.detailedInverterDataSubject.asObservable();
   public detailedMeterData$ = this.detailedMeterDataSubject.asObservable();
+  public detailedPlantData$ = this.detailedPlantDataSubject.asObservable();
   public metricCards$ = this.metricCardsSubject.asObservable();
 
   constructor(
@@ -90,12 +95,14 @@ export class EnergyService {
     const storedMonth = this.storageService.getMonth() || currentState.currentMonth;
     const storedYear = this.storageService.getYear() || currentState.currentYear;
     const storedDateRange = this.storageService.getDetailedDateRange() || currentState.detailedDateRange;
+    const storedPlantDate = this.storageService.getDetailedPlantDate() || currentState.detailedPlantDate;
     
     this.updateAppState({
       currentMonth: storedMonth,
       currentYear: storedYear,
       selectedDate: new Date(parseInt(storedYear), parseInt(storedMonth) - 1),
-      detailedDateRange: storedDateRange
+      detailedDateRange: storedDateRange,
+      detailedPlantDate: storedPlantDate
     });
   }
 
@@ -168,6 +175,11 @@ export class EnergyService {
     if (storedDetailedMeterData) {
       this.detailedMeterDataSubject.next(storedDetailedMeterData);
     }
+
+    const storedDetailedPlantData = this.storageService.loadDetailedPlantData();
+    if (storedDetailedPlantData) {
+      this.detailedPlantDataSubject.next(storedDetailedPlantData);
+    }
   }
 
   /**
@@ -239,16 +251,34 @@ export class EnergyService {
   }
 
   /**
+   * Change detailed plant date
+   */
+  changeDetailedPlantDate(date: Date): void {
+    this.storageService.setDetailedPlantDate(date);
+    this.updateAppState({ detailedPlantDate: date });
+  }
+
+  /**
    * Refresh all data
    */
   async refreshAllData(): Promise<void> {
     const currentState = this.appStateSubject.value;
     
+    console.log('🔄 Starting refresh all data...');
+    console.log('Current state:', {
+      month: currentState.currentMonth,
+      year: currentState.currentYear,
+      hasToken: !!currentState.authToken,
+      tokenLength: currentState.authToken.length
+    });
+    
     if (!this.hasValidToken()) {
+      console.log('⚠️ No valid token, prompting user...');
       await this.promptForToken();
     }
 
     if (!this.hasValidToken()) {
+      console.log('❌ Still no valid token, aborting...');
       this.updateAppState({ error: 'API token is required to fetch data.' });
       return;
     }
@@ -257,6 +287,7 @@ export class EnergyService {
     this.updateAppState({ error: '' });
 
     try {
+      console.log('📡 Making API calls...');
       await Promise.all([
         this.fetchInverterData(),
         this.fetchMeterData(),
@@ -267,6 +298,7 @@ export class EnergyService {
       this.updateMetricCards();
       console.log('✅ Data refresh completed successfully!');
     } catch (error: any) {
+      console.error('❌ Error during data refresh:', error);
       this.handleApiError(error);
     } finally {
       this.updateLoadingState({ isLoading: false });
@@ -361,34 +393,54 @@ export class EnergyService {
    * Refresh detailed data
    */
   async refreshDetailedData(): Promise<void> {
+    const currentState = this.appStateSubject.value;
+    
+    console.log('🔄 Starting refresh DETAILED data...');
+    console.log('Detailed state:', {
+      dateRange: currentState.detailedDateRange,
+      plantDate: currentState.detailedPlantDate,
+      hasToken: !!currentState.authToken,
+      tokenLength: currentState.authToken.length
+    });
+    
     if (!this.hasValidToken()) {
+      console.log('⚠️ No valid token, prompting user...');
       await this.promptForToken();
     }
 
     if (!this.hasValidToken()) {
+      console.log('❌ Still no valid token, aborting...');
       this.updateAppState({ error: 'API token is required to fetch data.' });
       return;
     }
 
     this.updateLoadingState({ 
       isDetailedInverterLoading: true,
-      isDetailedMeterLoading: true 
+      isDetailedMeterLoading: true,
+      isDetailedPlantLoading: true
     });
     this.updateAppState({ error: '' });
 
     try {
+      console.log('📡 Making DETAILED API calls...');
+      // Fetch inverter and meter data together (they use date range)
       await Promise.all([
         this.fetchDetailedInverterData(),
         this.fetchDetailedMeterData()
       ]);
 
+      // Fetch plant data separately (it uses single date)
+      await this.fetchDetailedPlantData();
+
       console.log('✅ Detailed data refresh completed successfully!');
     } catch (error: any) {
+      console.error('❌ Error during detailed data refresh:', error);
       this.handleApiError(error);
     } finally {
       this.updateLoadingState({ 
         isDetailedInverterLoading: false,
-        isDetailedMeterLoading: false 
+        isDetailedMeterLoading: false,
+        isDetailedPlantLoading: false
       });
     }
   }
@@ -399,6 +451,12 @@ export class EnergyService {
   private async fetchInverterData(): Promise<void> {
     const currentState = this.appStateSubject.value;
     
+    console.log('📡 Fetching inverter data...', {
+      month: currentState.currentMonth,
+      year: currentState.currentYear,
+      tokenPreview: currentState.authToken.substring(0, 20) + '...'
+    });
+    
     try {
       const response = await this.apiService.fetchDeviceData(
         'INVERTER',
@@ -407,16 +465,21 @@ export class EnergyService {
         currentState.authToken
       );
 
+      console.log('📊 Raw inverter API response:', response);
+
       const transformedData = this.dataTransformService.transformInverterData(
         response,
         currentState.currentMonth,
         currentState.currentYear
       );
 
+      console.log('🔄 Transformed inverter data:', transformedData);
+
       this.inverterDataSubject.next(transformedData);
       this.storageService.storeInverterData(transformedData);
+      console.log('✅ Inverter data updated successfully!');
     } catch (error) {
-      console.error('Error fetching inverter data:', error);
+      console.error('❌ Error fetching inverter data:', error);
       throw error;
     }
   }
@@ -482,13 +545,19 @@ export class EnergyService {
   private async fetchDetailedInverterData(): Promise<void> {
     const currentState = this.appStateSubject.value;
     
+    console.log('📡 Fetching DETAILED inverter data...');
+    console.log('Date range:', currentState.detailedDateRange);
+    
     if (!currentState.detailedDateRange || currentState.detailedDateRange.length !== 2) {
+      console.error('❌ Invalid detailed date range:', currentState.detailedDateRange);
       throw new Error('Invalid date range selected');
     }
 
     try {
       const startDate = this.apiService.formatDateForApi(currentState.detailedDateRange[0]);
       const endDate = this.apiService.formatDateForApi(currentState.detailedDateRange[1]);
+      
+      console.log('📅 Formatted dates for detailed inverter:', { startDate, endDate });
 
       const response = await this.apiService.fetchDetailedDeviceData(
         'INVERTER',
@@ -497,11 +566,16 @@ export class EnergyService {
         currentState.authToken
       );
 
+      console.log('📊 Raw DETAILED inverter API response:', response);
+
       const transformedData = this.dataTransformService.transformDetailedInverterData(response);
+      console.log('🔄 Transformed DETAILED inverter data:', transformedData);
+
       this.detailedInverterDataSubject.next(transformedData);
       this.storageService.storeDetailedInverterData(transformedData);
+      console.log('✅ Detailed inverter data updated successfully!');
     } catch (error) {
-      console.error('Error fetching detailed inverter data:', error);
+      console.error('❌ Error fetching detailed inverter data:', error);
       throw error;
     }
   }
@@ -533,6 +607,116 @@ export class EnergyService {
     } catch (error) {
       console.error('Error fetching detailed meter data:', error);
       throw error;
+    }
+  }
+
+  /**
+   * Fetch detailed plant data from API (uses single date format)
+   */
+  private async fetchDetailedPlantData(): Promise<void> {
+    const currentState = this.appStateSubject.value;
+    
+    if (!currentState.detailedPlantDate) {
+      throw new Error('Invalid plant date selected');
+    }
+
+    try {
+      const plantDate = currentState.detailedPlantDate;
+      const year = plantDate.getFullYear().toString();
+      const month = (plantDate.getMonth() + 1).toString().padStart(2, '0');
+      const day = plantDate.getDate().toString().padStart(2, '0');
+
+      const response = await this.apiService.fetchDetailedPlantData(
+        year,
+        month,
+        day,
+        currentState.authToken
+      );
+
+      const transformedData = this.dataTransformService.transformDetailedPlantData(response);
+      this.detailedPlantDataSubject.next(transformedData);
+      this.storageService.storeDetailedPlantData(transformedData);
+    } catch (error) {
+      console.error('Error fetching detailed plant data:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Refresh detailed inverter data only
+   */
+  async refreshDetailedInverterData(): Promise<void> {
+    if (!this.hasValidToken()) {
+      await this.promptForToken();
+    }
+
+    if (!this.hasValidToken()) {
+      this.updateAppState({ error: 'API token is required to fetch data.' });
+      return;
+    }
+
+    this.updateLoadingState({ isDetailedInverterLoading: true });
+    this.updateAppState({ error: '' });
+
+    try {
+      await this.fetchDetailedInverterData();
+      console.log('✅ Detailed inverter data refresh completed successfully!');
+    } catch (error: any) {
+      this.handleApiError(error);
+    } finally {
+      this.updateLoadingState({ isDetailedInverterLoading: false });
+    }
+  }
+
+  /**
+   * Refresh detailed meter data only
+   */
+  async refreshDetailedMeterData(): Promise<void> {
+    if (!this.hasValidToken()) {
+      await this.promptForToken();
+    }
+
+    if (!this.hasValidToken()) {
+      this.updateAppState({ error: 'API token is required to fetch data.' });
+      return;
+    }
+
+    this.updateLoadingState({ isDetailedMeterLoading: true });
+    this.updateAppState({ error: '' });
+
+    try {
+      await this.fetchDetailedMeterData();
+      console.log('✅ Detailed meter data refresh completed successfully!');
+    } catch (error: any) {
+      this.handleApiError(error);
+    } finally {
+      this.updateLoadingState({ isDetailedMeterLoading: false });
+    }
+  }
+
+  /**
+   * Refresh detailed plant data only
+   */
+  async refreshDetailedPlantData(): Promise<void> {
+    if (!this.hasValidToken()) {
+      await this.promptForToken();
+    }
+
+    if (!this.hasValidToken()) {
+      this.updateAppState({ error: 'API token is required to fetch data.' });
+      return;
+    }
+
+    this.updateLoadingState({ isDetailedPlantLoading: true });
+    this.updateAppState({ error: '' });
+
+    try {
+      await this.fetchDetailedPlantData();
+      console.log('✅ Detailed plant data refresh completed successfully!');
+    } catch (error: any) {
+      this.handleApiError(error);
+    } finally {
+      this.updateLoadingState({ isDetailedPlantLoading: false });
     }
   }
 
@@ -638,5 +822,24 @@ export class EnergyService {
       return `${formatDate(currentState.detailedDateRange[0])} - ${formatDate(currentState.detailedDateRange[1])}`;
     }
     return 'No date range selected';
+  }
+
+  /**
+   * Get detailed plant date text
+   */
+  getDetailedPlantDateText(): string {
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', {
+        year: 'numeric',
+        month: 'short',
+        day: 'numeric'
+      });
+    };
+    
+    const currentState = this.appStateSubject.value;
+    if (currentState.detailedPlantDate) {
+      return formatDate(currentState.detailedPlantDate);
+    }
+    return 'No date selected';
   }
 }

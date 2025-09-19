@@ -6,6 +6,7 @@ import {
   PlantData, 
   DetailedDeviceData, 
   DetailedMeterData,
+  DetailedPlantData,
   ChartColors 
 } from '../models';
 
@@ -314,62 +315,39 @@ export class ChartService {
   }
 
   /**
-   * Create detailed meter chart data
+   * Create detailed meter summary chart data (main totals only)
    */
-  createDetailedMeterChartData(data: DetailedMeterData[], title: string): ChartData<'line'> {
+  createDetailedMeterSummaryChartData(data: DetailedMeterData[], title: string): ChartData<'line'> {
     const labels = data.map(item => item.day);
 
     const potentialDatasets = [
       {
         condition: this.hasData(data.map(item => item.exportMain)),
         dataset: {
-          label: 'Export Whole Home (All Phases)',
+          label: 'Export Total (All Phases)',
           data: data.map(item => item.exportMain),
           borderColor: 'rgb(16, 185, 129)',
           backgroundColor: 'rgba(16, 185, 129, 0.1)',
-          fill: true,
+          fill: false,
           tension: 0.4,
           pointBackgroundColor: 'rgb(16, 185, 129)',
           pointBorderColor: 'rgb(16, 185, 129)',
-          pointHoverBackgroundColor: 'rgb(5, 150, 105)',
-          pointHoverBorderColor: 'rgb(5, 150, 105)',
           pointRadius: 2,
           pointHoverRadius: 4,
           borderWidth: 3
         }
       },
       {
-        condition: this.hasData(data.map(item => item.exportTariff2)),
-        dataset: {
-          label: 'Export Single Phase',
-          data: data.map(item => item.exportTariff2),
-          borderColor: 'rgb(52, 211, 153)',
-          backgroundColor: 'rgba(52, 211, 153, 0.1)',
-          fill: true,
-          tension: 0.4,
-          pointBackgroundColor: 'rgb(52, 211, 153)',
-          pointBorderColor: 'rgb(52, 211, 153)',
-          pointHoverBackgroundColor: 'rgb(20, 184, 166)',
-          pointHoverBorderColor: 'rgb(20, 184, 166)',
-          pointRadius: 2,
-          pointHoverRadius: 4,
-          borderWidth: 3,
-          borderDash: [5, 5]
-        }
-      },
-      {
         condition: this.hasData(data.map(item => item.importMain)),
         dataset: {
-          label: 'Import Whole Home (All Phases)',
+          label: 'Import Total (All Phases)',
           data: data.map(item => item.importMain),
           borderColor: 'rgb(239, 68, 68)',
           backgroundColor: 'rgba(239, 68, 68, 0.1)',
-          fill: true,
+          fill: false,
           tension: 0.4,
           pointBackgroundColor: 'rgb(239, 68, 68)',
           pointBorderColor: 'rgb(239, 68, 68)',
-          pointHoverBackgroundColor: 'rgb(220, 38, 38)',
-          pointHoverBorderColor: 'rgb(220, 38, 38)',
           pointRadius: 2,
           pointHoverRadius: 4,
           borderWidth: 3
@@ -378,20 +356,17 @@ export class ChartService {
       {
         condition: this.hasData(data.map(item => item.importTariff2)),
         dataset: {
-          label: 'Import Single Phase',
+          label: 'Import Tariff 2',
           data: data.map(item => item.importTariff2),
-          borderColor: 'rgb(249, 115, 22)',
-          backgroundColor: 'rgba(249, 115, 22, 0.1)',
-          fill: true,
+          borderColor: 'rgb(168, 85, 247)',
+          backgroundColor: 'rgba(168, 85, 247, 0.1)',
+          fill: false,
           tension: 0.4,
-          pointBackgroundColor: 'rgb(249, 115, 22)',
-          pointBorderColor: 'rgb(249, 115, 22)',
-          pointHoverBackgroundColor: 'rgb(234, 88, 12)',
-          pointHoverBorderColor: 'rgb(234, 88, 12)',
+          pointBackgroundColor: 'rgb(168, 85, 247)',
+          pointBorderColor: 'rgb(168, 85, 247)',
           pointRadius: 2,
           pointHoverRadius: 4,
-          borderWidth: 3,
-          borderDash: [5, 5]
+          borderWidth: 3
         }
       }
     ];
@@ -400,10 +375,334 @@ export class ChartService {
       .filter(item => item.condition)
       .map(item => item.dataset);
 
+    console.log(`📈 Detailed meter summary chart: ${validDatasets.length} datasets with data`);
+
     return {
       labels,
       datasets: validDatasets
     };
+  }
+
+  /**
+   * Create detailed meter CT breakdown chart data (all individual CT readings)
+   */
+  createDetailedMeterChartData(data: DetailedMeterData[], title: string): ChartData<'line'> {
+    const labels = data.map(item => item.day);
+
+    const potentialDatasets = [
+      // === GRID EXPORT (CT1-3: Grid phases measuring export to grid) ===
+      {
+        condition: this.hasData(data.map(item => item.exportCT1)),
+        dataset: {
+          label: '🔌 Grid Export CT1 (Phase 1)',
+          data: data.map(item => item.exportCT1),
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.exportCT2)),
+        dataset: {
+          label: '🔌 Grid Export CT2 (Phase 2)',
+          data: data.map(item => item.exportCT2),
+          borderColor: 'rgb(52, 211, 153)',
+          backgroundColor: 'rgba(52, 211, 153, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.exportCT3)),
+        dataset: {
+          label: '🔌 Grid Export CT3 (Phase 3)',
+          data: data.map(item => item.exportCT3),
+          borderColor: 'rgb(20, 184, 166)',
+          backgroundColor: 'rgba(20, 184, 166, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      // === GRID IMPORT (CT1-3: Grid phases measuring import from grid) ===
+      {
+        condition: this.hasData(data.map(item => item.importCT1)),
+        dataset: {
+          label: '🔌 Grid Import CT1 (Phase 1)',
+          data: data.map(item => item.importCT1),
+          borderColor: 'rgb(220, 38, 38)',
+          backgroundColor: 'rgba(220, 38, 38, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.importCT2)),
+        dataset: {
+          label: '🔌 Grid Import CT2 (Phase 2)',
+          data: data.map(item => item.importCT2),
+          borderColor: 'rgb(248, 113, 113)',
+          backgroundColor: 'rgba(248, 113, 113, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.importCT3)),
+        dataset: {
+          label: '🔌 Grid Import CT3 (Phase 3)',
+          data: data.map(item => item.importCT3),
+          backgroundColor: 'rgba(252, 165, 165, 0.05)',
+          borderColor: 'rgb(252, 165, 165)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      // === HOME CONSUMPTION (CT4-6: Home phases measuring actual home usage) ===
+      {
+        condition: this.hasData(data.map(item => item.importCT4)),
+        dataset: {
+          label: '🏠 Home Usage CT4 (Phase 1)',
+          data: data.map(item => item.importCT4),
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          fill: true,  // Fill background for home usage
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,  // Thin line
+          borderDash: [6, 4]  // Dashed line for home usage
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.importCT5)),
+        dataset: {
+          label: '🏠 Home Usage CT5 (Phase 2)',
+          data: data.map(item => item.importCT5),
+          borderColor: 'rgb(220, 38, 127)',
+          backgroundColor: 'rgba(220, 38, 127, 0.1)',
+          fill: true,  // Fill background for home usage
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,  // Thin line
+          borderDash: [6, 4]  // Dashed line for home usage
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.importCT6)),
+        dataset: {
+          label: '🏠 Home Usage CT6 (Phase 3)',
+          data: data.map(item => item.importCT6),
+          borderColor: 'rgb(185, 28, 28)',
+          backgroundColor: 'rgba(185, 28, 28, 0.1)',
+          fill: true,  // Fill background for home usage
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,  // Thin line
+          borderDash: [6, 4]  // Dashed line for home usage
+        }
+      },
+      // === HOME EXPORT (CT4-6: Home phases - usually minimal export) ===
+      {
+        condition: this.hasData(data.map(item => item.exportCT4)),
+        dataset: {
+          label: '🏠 Home Export CT4 (Phase 1)',
+          data: data.map(item => item.exportCT4),
+          borderColor: 'rgb(101, 163, 13)',
+          backgroundColor: 'rgba(101, 163, 13, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.exportCT5)),
+        dataset: {
+          label: '🏠 Home Export CT5 (Phase 2)',
+          data: data.map(item => item.exportCT5),
+          borderColor: 'rgb(132, 204, 22)',
+          backgroundColor: 'rgba(132, 204, 22, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      {
+        condition: this.hasData(data.map(item => item.exportCT6)),
+        dataset: {
+          label: '🏠 Home Export CT6 (Phase 3)',
+          data: data.map(item => item.exportCT6),
+          borderColor: 'rgb(163, 230, 53)',
+          backgroundColor: 'rgba(163, 230, 53, 0.05)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3
+        }
+      },
+      // Export Tariff 2 (remaining tariff data for CT breakdown chart)
+      {
+        condition: this.hasData(data.map(item => item.exportTariff2)),
+        dataset: {
+          label: 'Export Tariff 2',
+          data: data.map(item => item.exportTariff2),
+          borderColor: 'rgb(22, 163, 74)',
+          backgroundColor: 'rgba(22, 163, 74, 0.1)',
+          fill: false,
+          tension: 0.4,
+          pointRadius: 2,
+          pointHoverRadius: 4,
+          borderWidth: 3,
+          borderDash: [8, 4]
+        }
+      }
+    ];
+
+    const validDatasets = potentialDatasets
+      .filter(item => item.condition)
+      .map(item => item.dataset);
+
+    console.log(`📈 Detailed meter CT breakdown chart: ${validDatasets.length} datasets with data`);
+
+    return {
+      labels,
+      datasets: validDatasets
+    };
+  }
+
+  /**
+   * Create detailed plant chart data
+   */
+  createDetailedPlantChartData(data: DetailedPlantData[], title: string): ChartData<'polarArea'> {
+    console.log('📊 Creating polar area chart with data:', data);
+    
+    // For polar area chart, use the most recent data point
+    const latestData = data.length > 0 ? data[data.length - 1] : null;
+    
+    console.log('📊 Latest data point for polar area chart:', latestData);
+    
+    if (!latestData) {
+      console.log('📊 No data available for polar area chart, creating test chart');
+      // Return test data to ensure polar area chart renders
+      return {
+        labels: ['🌞 Test Production', '🏠 Test Consumption', '⚡ Test Export'],
+        datasets: [{
+          data: [365, 156, 305],
+          backgroundColor: [
+            'rgba(34, 197, 94, 0.8)',
+            'rgba(239, 68, 68, 0.8)',
+            'rgba(16, 185, 129, 0.8)'
+          ],
+          borderColor: [
+            'rgb(34, 197, 94)',
+            'rgb(239, 68, 68)',
+            'rgb(16, 185, 129)'
+          ],
+          borderWidth: 2
+        }]
+      };
+    }
+
+    // Create polar area chart segments
+    const pieSegments = [
+      {
+        label: '🌞 Total Production',
+        value: latestData.totalProduction,
+        color: 'rgba(34, 197, 94, 0.8)',
+        borderColor: 'rgb(34, 197, 94)'
+      },
+      {
+        label: '🏠 Total Consumption', 
+        value: latestData.totalConsumption,
+        color: 'rgba(239, 68, 68, 0.8)',
+        borderColor: 'rgb(239, 68, 68)'
+      },
+      {
+        label: '🔋 Self Consumption',
+        value: latestData.selfConsumption,
+        color: 'rgba(139, 92, 246, 0.8)',
+        borderColor: 'rgb(139, 92, 246)'
+      },
+      {
+        label: '⚡ Grid Feed-in',
+        value: latestData.gridFeed,
+        color: 'rgba(16, 185, 129, 0.8)',
+        borderColor: 'rgb(16, 185, 129)'
+      },
+      {
+        label: '🔌 Grid Consumption',
+        value: latestData.gridConsumption,
+        color: 'rgba(59, 130, 246, 0.8)',
+        borderColor: 'rgb(59, 130, 246)'
+      }
+    ];
+
+    // Filter out segments with zero, negative, or null values
+    const validSegments = pieSegments.filter(segment => segment.value != null && segment.value > 0);
+
+    console.log('📊 All polar area segments:', pieSegments);
+    console.log('📊 Valid polar area segments (>0):', validSegments);
+
+    const labels = validSegments.map(segment => segment.label);
+    const values = validSegments.map(segment => segment.value);
+    const backgroundColors = validSegments.map(segment => segment.color);
+    const borderColors = validSegments.map(segment => segment.borderColor);
+
+    console.log(`📊 Detailed plant polar area chart: ${validSegments.length} segments, date: ${latestData.date}`);
+    console.log('📊 Final polar area data - labels:', labels);
+    console.log('📊 Final polar area data - values:', values);
+
+    // If no valid segments, create a fallback chart showing "No data"
+    if (validSegments.length === 0) {
+      console.log('📊 No valid segments, creating fallback polar area chart');
+      return {
+        labels: ['No Data Available'],
+        datasets: [{
+          data: [1],
+          backgroundColor: ['rgba(156, 163, 175, 0.5)'],
+          borderColor: ['rgb(156, 163, 175)'],
+          borderWidth: 3
+        }]
+      };
+    }
+
+    const chartData = {
+      labels,
+      datasets: [{
+        data: values,
+        backgroundColor: backgroundColors,
+        borderColor: borderColors,
+        borderWidth: 3
+      }]
+    };
+
+    console.log('📊 Final polar area chart data object:', chartData);
+    return chartData;
   }
 
   /**
@@ -432,5 +731,74 @@ export class ChartService {
    */
   getDetailedChartOptions(title: string): ChartOptions<'line'> {
     return this.createDetailedChartOptions(title);
+  }
+
+  /**
+   * Get chart options for detailed plant polar area chart
+   */
+  getDetailedPlantChartOptions(title: string): ChartOptions<'polarArea'> {
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        title: {
+          display: true,
+          text: title,
+          font: {
+            size: 18,
+            weight: 'bold'
+          },
+          padding: {
+            top: 15,
+            bottom: 25
+          }
+        },
+        legend: {
+          display: true,
+          position: 'right',
+          labels: {
+            usePointStyle: true,
+            padding: 20,
+            font: {
+              size: 14
+            }
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context: any) {
+              const label = context.label || '';
+              const value = Number(context.raw || 0);
+              const dataArray = context.dataset.data as number[];
+              const total = dataArray.reduce((a: number, b: number) => a + b, 0);
+              const percentage = total > 0 ? ((value / total) * 100).toFixed(1) : '0';
+              return `${label}: ${value.toFixed(2)} kWh (${percentage}%)`;
+            }
+          }
+        }
+      },
+      scales: {
+        r: {
+          beginAtZero: true,
+          ticks: {
+            display: true,
+            font: {
+              size: 12
+            },
+            callback: function(value: any) {
+              return value + ' kWh';
+            }
+          },
+          grid: {
+            display: true,
+            color: 'rgba(0, 0, 0, 0.1)'
+          },
+          angleLines: {
+            display: true,
+            color: 'rgba(0, 0, 0, 0.1)'
+          }
+        }
+      }
+    };
   }
 }

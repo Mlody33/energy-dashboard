@@ -7,6 +7,7 @@ import {
   Chart,
   CategoryScale,
   LinearScale,
+  RadialLinearScale,  // For polar area charts
   PointElement,
   LineElement,
   Title,
@@ -15,12 +16,16 @@ import {
   Filler,
   LineController,
   BarController,
-  BarElement
+  BarElement,
+  ArcElement,        // For pie and polar area charts
+  PieController,     // For pie charts
+  PolarAreaController // For polar area charts
 } from 'chart.js';
 
 Chart.register(
   CategoryScale,
   LinearScale,
+  RadialLinearScale,  // Register RadialLinearScale for polar area charts
   PointElement,
   LineElement,
   BarElement,
@@ -29,10 +34,13 @@ Chart.register(
   Legend,
   Filler,
   LineController,
-  BarController
+  BarController,
+  ArcElement,        // Register ArcElement for pie and polar area charts
+  PieController,     // Register PieController for pie charts
+  PolarAreaController // Register PolarAreaController for polar area charts
 );
 
-console.log('🔧 Chart.js components registered successfully');
+console.log('🔧 Chart.js components registered successfully (including pie and polar area chart with radial scale support)');
 
 bootstrapApplication(App, appConfig)
   .catch((err) => console.error(err));

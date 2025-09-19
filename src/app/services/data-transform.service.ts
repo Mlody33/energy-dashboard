@@ -5,6 +5,7 @@ import {
   PlantData, 
   DetailedDeviceData, 
   DetailedMeterData,
+  DetailedPlantData,
   DeviceResponse 
 } from '../models';
 
@@ -195,12 +196,17 @@ export class DataTransformService {
    * Transform detailed device data (no month filling needed)
    */
   transformDetailedInverterData(response: DeviceResponse): DetailedDeviceData[] {
+    console.log('🔄 Transforming detailed inverter data, first item params:', 
+      response.summary[0]?.paramsSummary);
+    
     return response.summary.map(item => {
       const date = new Date(item.date);
       const dayNumber = date.getDate().toString().padStart(2, '0');
       
-      // Use the correct property name from the actual API response
-      const energyValue = item.paramsSummary?.production_kwh_ || 0;
+      // DETAILED API uses different property name!
+      const energyValue = item.paramsSummary?.daily_production__active__kwh_ || 0;
+      
+      console.log(`📊 Day ${dayNumber}: ${energyValue} kWh`);
       
       return {
         date: item.date,
@@ -214,18 +220,101 @@ export class DataTransformService {
    * Transform detailed meter data (no month filling needed)
    */
   transformDetailedMeterData(response: DeviceResponse): DetailedMeterData[] {
+    console.log('🔄 Transforming detailed meter data, first item params:', 
+      response.summary[0]?.paramsSummary);
+    
+    return response.summary.map(item => {
+      const date = new Date(item.date);
+      const dayNumber = date.getDate().toString().padStart(2, '0');
+      const params = item.paramsSummary || {};
+      
+      // Main totals (aggregated values)
+      const exportMain = params.daily_negative_energy_kwh_ || 0;
+      const exportTariff2 = params.daily_negative_energy_2_kwh_ || 0;
+      const importMain = params.daily_positive_energy_kwh_ || 0;
+      const importTariff2 = params.daily_positive_energy_2_kwh_ || 0;
+      
+      // Individual CT (Current Transformer) readings - Export
+      const exportCT1 = params.daily_negative_energy_ct1_kwh_ || 0;
+      const exportCT2 = params.daily_negative_energy_ct2_kwh_ || 0;
+      const exportCT3 = params.daily_negative_energy_ct3_kwh_ || 0;
+      const exportCT4 = params.daily_negative_energy_ct4_kwh_ || 0;
+      const exportCT5 = params.daily_negative_energy_ct5_kwh_ || 0;
+      const exportCT6 = params.daily_negative_energy_ct6_kwh_ || 0;
+      
+      // Individual CT (Current Transformer) readings - Import  
+      const importCT1 = params.daily_positive_energy_ct1_kwh_ || 0;
+      const importCT2 = params.daily_positive_energy_ct2_kwh_ || 0;
+      const importCT3 = params.daily_positive_energy_ct3_kwh_ || 0;
+      const importCT4 = params.daily_positive_energy_ct4_kwh_ || 0;
+      const importCT5 = params.daily_positive_energy_ct5_kwh_ || 0;
+      const importCT6 = params.daily_positive_energy_ct6_kwh_ || 0;
+      
+      console.log(`📊 Day ${dayNumber}:`);
+      console.log(`   Main: Export=${exportMain}/${exportTariff2}, Import=${importMain}/${importTariff2}`);
+      console.log(`   CT Export: [${exportCT1}, ${exportCT2}, ${exportCT3}, ${exportCT4}, ${exportCT5}, ${exportCT6}]`);
+      console.log(`   CT Import: [${importCT1}, ${importCT2}, ${importCT3}, ${importCT4}, ${importCT5}, ${importCT6}]`);
+      
+      return {
+        date: item.date,
+        day: dayNumber,
+        exportMain,
+        exportTariff2,
+        importMain,
+        importTariff2,
+        exportCT1,
+        exportCT2,
+        exportCT3,
+        exportCT4,
+        exportCT5,
+        exportCT6,
+        importCT1,
+        importCT2,
+        importCT3,
+        importCT4,
+        importCT5,
+        importCT6
+      };
+    });
+  }
+
+  /**
+   * Transform detailed plant data (no month filling needed)
+   */
+  transformDetailedPlantData(response: DeviceResponse): DetailedPlantData[] {
+    console.log('🔄 Transforming detailed plant data, first item params:', 
+      response.summary[0]?.paramsSummary);
+    
     return response.summary.map(item => {
       const date = new Date(item.date);
       const dayNumber = date.getDate().toString().padStart(2, '0');
       
-      // Transform API response to match DetailedMeterData interface
+      // DETAILED PLANT API uses different property names AND WATTS instead of kWh!
+      const params = item.paramsSummary || {};
+      
+      // Convert from Wh to kWh (divide by 1000)
+      const totalProduction = (params.production_power_w_ || 0) / 1000;
+      const totalConsumption = (params.consumption_power_w_ || 0) / 1000;
+      const gridFeed = (params.feed_in_power_w_ || 0) / 1000;
+      const gridConsumption = (params.purchasing_power_w_ || 0) / 1000;
+      
+      // Calculate self consumption: production that was consumed locally (not fed into grid)
+      const selfConsumption = Math.max(0, totalProduction - gridFeed);
+      
+      // Calculate self sufficiency percentage: how much of consumption was met by own production
+      const selfSufficiency = totalConsumption > 0 ? (selfConsumption / totalConsumption) * 100 : 0;
+      
+      console.log(`📊 Day ${dayNumber}: Prod=${totalProduction.toFixed(2)}kWh, Cons=${totalConsumption.toFixed(2)}kWh, Feed=${gridFeed.toFixed(2)}kWh`);
+      
       return {
         date: item.date,
         day: dayNumber,
-        exportMain: item.paramsSummary?.total_negative_energy_kwh_ || 0,
-        exportTariff2: item.paramsSummary?.total_negative_energy_2_kwh_ || 0,
-        importMain: item.paramsSummary?.total_positive_energy_kwh_ || 0,
-        importTariff2: item.paramsSummary?.total_positive_energy_2_kwh_ || 0
+        totalProduction,
+        totalConsumption,
+        gridFeed,
+        gridConsumption,
+        selfConsumption,
+        selfSufficiency
       };
     });
   }

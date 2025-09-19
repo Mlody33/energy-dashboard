@@ -48,6 +48,14 @@ export class ApiService {
   ): Promise<DeviceResponse> {
     const url = `${this.API_BASE}/device/${deviceType}/daily?month=${month}&year=${year}`;
     
+    console.log(`🌐 API Call: ${deviceType}`, {
+      url,
+      method: 'GET',
+      headers: {
+        'X-Global-Home-Token': token.substring(0, 20) + '...'
+      }
+    });
+    
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -57,14 +65,26 @@ export class ApiService {
         mode: 'cors'
       });
 
+      console.log(`📡 ${deviceType} Response:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
       if (!response.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
       const data = await response.json();
+      console.log(`📊 ${deviceType} Response Data:`, data);
       return data as DeviceResponse;
     } catch (error) {
-      console.error(`Error fetching ${deviceType} data:`, error);
+      console.error(`❌ Error fetching ${deviceType} data:`, error);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('🚨 Network error - Check if the API server is running and accessible');
+        console.error('🔗 Trying to reach:', url);
+      }
       throw error;
     }
   }
@@ -111,6 +131,60 @@ export class ApiService {
   ): Promise<DeviceResponse> {
     const url = `${this.API_BASE}/device/${deviceType}/detailed?start=${startDate}&end=${endDate}`;
     
+    console.log(`🌐 DETAILED API Call: ${deviceType}`, {
+      url,
+      startDate,
+      endDate,
+      method: 'GET',
+      headers: {
+        'X-Global-Home-Token': token.substring(0, 20) + '...'
+      }
+    });
+    
+    try {
+      const response = await fetch(url, {
+        method: 'GET',
+        headers: {
+          'X-Global-Home-Token': token
+        },
+        mode: 'cors'
+      });
+
+      console.log(`📡 DETAILED ${deviceType} Response:`, {
+        status: response.status,
+        statusText: response.statusText,
+        ok: response.ok,
+        headers: Object.fromEntries(response.headers.entries())
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log(`📊 DETAILED ${deviceType} Response Data:`, data);
+      return data as DeviceResponse;
+    } catch (error) {
+      console.error(`❌ Error fetching detailed ${deviceType} data:`, error);
+      if (error instanceof TypeError && error.message.includes('Failed to fetch')) {
+        console.error('🚨 Network error - Check if the detailed API endpoints exist');
+        console.error('🔗 Trying to reach:', url);
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * Fetch detailed plant data for a specific date (uses different format: year/month/day)
+   */
+  async fetchDetailedPlantData(
+    year: string,
+    month: string,
+    day: string,
+    token: string
+  ): Promise<DeviceResponse> {
+    const url = `${this.PLANT_BASE}/detailed?year=${year}&month=${month}&day=${day}`;
+    
     try {
       const response = await fetch(url, {
         method: 'GET',
@@ -127,7 +201,7 @@ export class ApiService {
       const data = await response.json();
       return data as DeviceResponse;
     } catch (error) {
-      console.error(`Error fetching detailed ${deviceType} data:`, error);
+      console.error('Error fetching detailed plant data:', error);
       throw error;
     }
   }

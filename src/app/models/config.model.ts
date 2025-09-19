@@ -14,11 +14,13 @@ export interface AppConfig {
     monthKey: string;
     yearKey: string;
     dateRangeKey: string;
+    detailedPlantDateKey: string;
     inverterDataKey: string;
     meterDataKey: string;
     plantDataKey: string;
     detailedInverterDataKey: string;
     detailedMeterDataKey: string;
+    detailedPlantDataKey: string;
   };
   defaults: {
     month: string;
@@ -34,6 +36,7 @@ export interface LoadingStates {
   isPlantLoading: boolean;
   isDetailedInverterLoading: boolean;
   isDetailedMeterLoading: boolean;
+  isDetailedPlantLoading: boolean;
 }
 
 export interface AppState {
@@ -44,5 +47,6 @@ export interface AppState {
   currentYear: string;
   selectedDate: Date;
   detailedDateRange: Date[];
+  detailedPlantDate: Date;
   authToken: string;
 }

@@ -196,7 +196,7 @@
     <div class="section-header">
       <div class="section-info">
         <h3>📈 Detailed Daily Statistics</h3>
-        <p>Detailed METER and INVERTER daily statistics with custom date range - {{ detailedDateRangeText }}</p>
+        <p>Detailed METER, INVERTER and PLANT daily statistics with custom date range - {{ detailedDateRangeText }}</p>
       </div>
       <div class="data-selector">
         <div class="date-range-picker">
@@ -207,7 +207,7 @@
             selectionMode="range"
             dateFormat="dd/mm/yy" 
             [readonlyInput]="true"
-            [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading"
+            [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading || appState.loading.isDetailedPlantLoading"
             placeholder="Select Date Range"
             class="detail-date-picker range-picker"
             [showIcon]="true"
@@ -216,9 +216,9 @@
             [numberOfMonths]="2">
           </p-datepicker>
         </div>
-        <button class="refresh-btn" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading" title="Refresh Detailed Data">
-          <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedInverterLoading && !appState.loading.isDetailedMeterLoading" [class.pi-spin]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading" [class.pi-spinner]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading"></i>
-          <span>{{ (appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading) ? 'Loading...' : 'Refresh Detailed' }}</span>
+        <button class="refresh-btn" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading || appState.loading.isDetailedPlantLoading" title="Refresh Detailed Data">
+          <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedInverterLoading && !appState.loading.isDetailedMeterLoading && !appState.loading.isDetailedPlantLoading" [class.pi-spin]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading || appState.loading.isDetailedPlantLoading" [class.pi-spinner]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading || appState.loading.isDetailedPlantLoading"></i>
+          <span>{{ (appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading || appState.loading.isDetailedPlantLoading) ? 'Loading...' : 'Refresh Detailed' }}</span>
         </button>
       </div>
     </div>
@@ -231,7 +231,7 @@
           <p>Detailed daily solar energy production from inverter with date range</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedInverterLoading" title="Refresh Detailed Inverter Data">
+          <button class="refresh-btn secondary" (click)="refreshDetailedInverterData()" [disabled]="appState.loading.isDetailedInverterLoading" title="Refresh Detailed Inverter Data">
             <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedInverterLoading" [class.pi-spin]="appState.loading.isDetailedInverterLoading" [class.pi-spinner]="appState.loading.isDetailedInverterLoading"></i>
             <span>{{ appState.loading.isDetailedInverterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
@@ -259,15 +259,15 @@
       </div>
     </div>
 
-    <!-- Detailed Meter Chart Subsection -->
+    <!-- Detailed Meter Summary Chart Subsection -->
     <div class="chart-subsection">
       <div class="subsection-header">
         <div class="subsection-info">
-          <h4>⚡ Detailed METER Data</h4>
-          <p>Detailed daily grid energy import/export measurements with date range</p>
+          <h4>⚡ Detailed METER Summary</h4>
+          <p>Main energy totals - Export Total, Import Total, and Import Tariff 2</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">
+          <button class="refresh-btn secondary" (click)="refreshDetailedMeterData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">
             <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedMeterLoading" [class.pi-spin]="appState.loading.isDetailedMeterLoading" [class.pi-spinner]="appState.loading.isDetailedMeterLoading"></i>
             <span>{{ appState.loading.isDetailedMeterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
@@ -276,11 +276,11 @@
 
       <div class="chart-container-inner">
         <div class="chart-wrapper" style="height: 300px; width: 100%; position: relative;">
-          @if (detailedMeterChartData.datasets && detailedMeterChartData.datasets.length > 0) {
+          @if (detailedMeterSummaryChartData.datasets && detailedMeterSummaryChartData.datasets.length > 0) {
             <canvas
               baseChart
-              [data]="detailedMeterChartData"
-              [options]="detailedMeterChartOptions"
+              [data]="detailedMeterSummaryChartData"
+              [options]="detailedMeterSummaryChartOptions"
               [type]="chartType"
               width="800"
               height="300"
@@ -288,7 +288,94 @@
             </canvas>
           } @else {
             <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
-              📊 Detailed meter data is being prepared...
+              📊 Detailed meter summary data is being prepared...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Meter CT Breakdown Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>⚡ Detailed METER CT Breakdown</h4>
+          <p>Individual CT readings: 🔌 CT1-3 (Grid phases), 🏠 CT4-6 (Home consumption phases), plus Export Tariff 2</p>
+        </div>
+        <div class="subsection-actions">
+          <button class="refresh-btn secondary" (click)="refreshDetailedMeterData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedMeterLoading" [class.pi-spin]="appState.loading.isDetailedMeterLoading" [class.pi-spinner]="appState.loading.isDetailedMeterLoading"></i>
+            <span>{{ appState.loading.isDetailedMeterLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 450px; width: 100%; position: relative;">
+          @if (detailedMeterChartData.datasets && detailedMeterChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="detailedMeterChartData"
+              [options]="detailedMeterChartOptions"
+              [type]="chartType"
+              width="800"
+              height="450"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Detailed meter CT breakdown data is being prepared...
+            </div>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Detailed Plant Chart Subsection -->
+    <div class="chart-subsection">
+      <div class="subsection-header">
+        <div class="subsection-info">
+          <h4>🌿 Detailed PLANT Data</h4>
+          <p>Plant energy breakdown as polar area chart - radial visualization showing production, consumption, and energy flow for {{ detailedPlantDateText }}</p>
+        </div>
+        <div class="subsection-actions">
+          <div class="date-picker-inline">
+            <label>Plant Date:</label>
+            <p-datepicker 
+              [(ngModel)]="appState.detailedPlantDate" 
+              (ngModelChange)="onDetailedPlantDateChange($event)"
+              dateFormat="dd/mm/yy" 
+              [readonlyInput]="true"
+              [disabled]="appState.loading.isDetailedPlantLoading"
+              placeholder="Select Date"
+              class="detail-date-picker single-date-picker"
+              [showIcon]="true"
+              iconDisplay="input"
+              title="Select Plant Date">
+            </p-datepicker>
+          </div>
+          <button class="refresh-btn secondary" (click)="refreshDetailedPlantData()" [disabled]="appState.loading.isDetailedPlantLoading" title="Refresh Detailed Plant Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedPlantLoading" [class.pi-spin]="appState.loading.isDetailedPlantLoading" [class.pi-spinner]="appState.loading.isDetailedPlantLoading"></i>
+            <span>{{ appState.loading.isDetailedPlantLoading ? 'Loading...' : 'Refresh' }}</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="chart-container-inner">
+        <div class="chart-wrapper" style="height: 500px; width: 100%; position: relative;">
+          @if (detailedPlantChartData && detailedPlantChartData.datasets && detailedPlantChartData.datasets.length > 0) {
+            <canvas
+              baseChart
+              [data]="detailedPlantChartData"
+              [options]="detailedPlantChartOptions"
+              type="polarArea"
+              width="800"
+              height="500"
+              style="display: block !important; width: 100% !important; height: 100% !important; border: none;">
+            </canvas>
+          } @else {
+            <div style="display: flex; align-items: center; justify-content: center; height: 100%; color: #6b7280; font-size: 1rem; background: #f9fafb; border-radius: 8px;">
+              📊 Plant data is loading or no data available for selected date...
             </div>
           }
         </div>
