@@ -383,4 +383,54 @@
     </div>
   </div>
 
+  <!-- Token Configuration Dialog -->
+  <p-dialog 
+    header="API Token Configuration" 
+    [(visible)]="tokenDialogVisible" 
+    [modal]="true" 
+    [closable]="true"
+    [draggable]="false"
+    [resizable]="false"
+    styleClass="token-dialog"
+    [style]="{width: '450px'}"
+    (onHide)="cancelToken()">
+    
+    <div class="token-dialog-content">
+      <p class="token-dialog-description">
+        <i class="pi pi-info-circle"></i>
+        Please enter your Global Home API Token (X-Global-Home-Token):
+      </p>
+      
+      <div class="token-input-group">
+        <label for="tokenInput" class="token-input-label">API Token:</label>
+        <input 
+          pInputText 
+          id="tokenInput"
+          type="password"
+          [(ngModel)]="tokenInputValue" 
+          placeholder="Enter your API token"
+          class="token-input"
+          autocomplete="off" />
+      </div>
+    </div>
+    
+    <ng-template pTemplate="footer">
+      <div class="token-dialog-footer">
+        <p-button 
+          label="Cancel" 
+          icon="pi pi-times" 
+          [text]="true"
+          severity="secondary"
+          (onClick)="cancelToken()">
+        </p-button>
+        <p-button 
+          label="Save" 
+          icon="pi pi-check" 
+          severity="success"
+          (onClick)="saveToken()">
+        </p-button>
+      </div>
+    </ng-template>
+  </p-dialog>
+
 </div>

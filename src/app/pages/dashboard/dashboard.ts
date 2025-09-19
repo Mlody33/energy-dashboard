@@ -3,6 +3,9 @@ import { CommonModule } from '@angular/common';
 import { BaseChartDirective } from 'ng2-charts';
 import { ChartData, ChartOptions } from 'chart.js';
 import { DatePickerModule } from 'primeng/datepicker';
+import { DialogModule } from 'primeng/dialog';
+import { InputTextModule } from 'primeng/inputtext';
+import { ButtonModule } from 'primeng/button';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 
@@ -22,7 +25,7 @@ import { EnergyService, ChartService } from '../../services';
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, BaseChartDirective, DatePickerModule, FormsModule],
+  imports: [CommonModule, BaseChartDirective, DatePickerModule, DialogModule, InputTextModule, ButtonModule, FormsModule],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })
@@ -272,9 +275,27 @@ export class Dashboard implements OnInit, OnDestroy {
     }
   }
 
+  // Token Dialog Properties
+  tokenDialogVisible: boolean = false;
+  tokenInputValue: string = '';
+
   // Action methods (delegate to service)
   async changeToken(): Promise<void> {
-    await this.energyService.promptForToken();
+    this.tokenInputValue = this.appState.authToken || '';
+    this.tokenDialogVisible = true;
+  }
+
+  saveToken(): void {
+    const trimmedToken = this.tokenInputValue.trim();
+    if (trimmedToken) {
+      this.energyService.setToken(trimmedToken);
+    }
+    this.tokenDialogVisible = false;
+  }
+
+  cancelToken(): void {
+    this.tokenDialogVisible = false;
+    this.tokenInputValue = '';
   }
 
   async refreshData(): Promise<void> {

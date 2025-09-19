@@ -208,21 +208,11 @@ export class EnergyService {
   }
 
   /**
-   * Prompt user for token
+   * Legacy method - Token prompting is now handled by UI dialog
+   * This method is kept for backward compatibility but does nothing
    */
   async promptForToken(): Promise<string> {
-    return new Promise((resolve) => {
-      const currentToken = this.appStateSubject.value.authToken;
-      const token = prompt('Please enter your Global Home API Token (X-Global-Home-Token):', currentToken);
-      
-      if (token !== null && token.trim() !== '') {
-        const trimmedToken = token.trim();
-        this.setToken(trimmedToken);
-        resolve(trimmedToken);
-      } else {
-        resolve(currentToken);
-      }
-    });
+    return Promise.resolve(this.appStateSubject.value.authToken);
   }
 
   /**
