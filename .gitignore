@@ -37,6 +37,9 @@ yarn-error.log
 testem.log
 /typings
 
+# API test data and responses
+/globalhome
+
 # System files
 .DS_Store
 Thumbs.db
