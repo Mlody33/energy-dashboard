@@ -24,7 +24,7 @@
         <p>Solar production and grid energy data monitoring system</p>
       </div>
       <div class="data-selector">
-        <button class="token-btn" (click)="changeToken()" [disabled]="isLoading" title="Change API Token">
+        <button class="token-btn" (click)="changeToken()" [disabled]="appState.loading.isLoading" title="Change API Token">
           <i class="pi pi-key"></i>
           <span>Token</span>
         </button>
@@ -40,10 +40,10 @@
     }
     
     <!-- Error Message -->
-    @if (errorMessage) {
+    @if (appState.error) {
       <div class="error-message">
         <i class="pi pi-exclamation-triangle"></i>
-        <span>{{ errorMessage }}</span>
+        <span>{{ appState.error }}</span>
       </div>
     }
   </div>
@@ -54,7 +54,7 @@
       <div class="section-info">
         <h3>📊 Daily Energy Data</h3>
         <p>Daily solar production, grid energy flow, and plant efficiency metrics - {{ currentDateDisplayText }}</p>
-        @if (showRefreshReminder) {
+        @if (appState.showRefreshReminder) {
           <div class="refresh-reminder">
             <i class="pi pi-exclamation-triangle" style="color: #f59e0b; margin-right: 6px;"></i>
             <span style="color: #f59e0b; font-size: 0.875rem; font-weight: 500;">Data may not match selected month - Click refresh to update charts</span>
@@ -63,21 +63,21 @@
       </div>
       <div class="data-selector">
         <p-datepicker 
-          [(ngModel)]="selectedDate" 
+          [(ngModel)]="appState.selectedDate" 
           (ngModelChange)="onDatePickerChange($event)"
           view="month" 
           dateFormat="mm/yy" 
           [readonlyInput]="true"
-          [disabled]="isLoading"
+          [disabled]="appState.loading.isLoading"
           placeholder="Select Month/Year"
           class="month-year-picker"
           [showIcon]="true"
           iconDisplay="input"
           title="Select Month and Year">
         </p-datepicker>
-        <button class="refresh-btn" (click)="refreshData()" [disabled]="isLoading" title="Refresh All Daily Data">
-          <i class="pi" [class.pi-refresh]="!isLoading" [class.pi-spin]="isLoading" [class.pi-spinner]="isLoading"></i>
-          <span>{{ isLoading ? 'Loading...' : 'Refresh All' }}</span>
+        <button class="refresh-btn" (click)="refreshData()" [disabled]="appState.loading.isLoading" title="Refresh All Daily Data">
+          <i class="pi" [class.pi-refresh]="!appState.loading.isLoading" [class.pi-spin]="appState.loading.isLoading" [class.pi-spinner]="appState.loading.isLoading"></i>
+          <span>{{ appState.loading.isLoading ? 'Loading...' : 'Refresh All' }}</span>
         </button>
       </div>
     </div>
@@ -90,9 +90,9 @@
           <p>Daily solar energy production from inverter</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshInverterData()" [disabled]="isInverterLoading" title="Refresh Inverter Data">
-            <i class="pi" [class.pi-refresh]="!isInverterLoading" [class.pi-spin]="isInverterLoading" [class.pi-spinner]="isInverterLoading"></i>
-            <span>{{ isInverterLoading ? 'Loading...' : 'Refresh' }}</span>
+          <button class="refresh-btn secondary" (click)="refreshInverterData()" [disabled]="appState.loading.isInverterLoading" title="Refresh Inverter Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isInverterLoading" [class.pi-spin]="appState.loading.isInverterLoading" [class.pi-spinner]="appState.loading.isInverterLoading"></i>
+            <span>{{ appState.loading.isInverterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
@@ -126,9 +126,9 @@
           <p>Daily grid energy import/export measurements</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshMeterData()" [disabled]="isMeterLoading" title="Refresh Meter Data">
-            <i class="pi" [class.pi-refresh]="!isMeterLoading" [class.pi-spin]="isMeterLoading" [class.pi-spinner]="isMeterLoading"></i>
-            <span>{{ isMeterLoading ? 'Loading...' : 'Refresh' }}</span>
+          <button class="refresh-btn secondary" (click)="refreshMeterData()" [disabled]="appState.loading.isMeterLoading" title="Refresh Meter Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isMeterLoading" [class.pi-spin]="appState.loading.isMeterLoading" [class.pi-spinner]="appState.loading.isMeterLoading"></i>
+            <span>{{ appState.loading.isMeterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
@@ -162,9 +162,9 @@
           <p>Daily plant energy flow and efficiency metrics</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshPlantData()" [disabled]="isPlantLoading" title="Refresh Plant Data">
-            <i class="pi" [class.pi-refresh]="!isPlantLoading" [class.pi-spin]="isPlantLoading" [class.pi-spinner]="isPlantLoading"></i>
-            <span>{{ isPlantLoading ? 'Loading...' : 'Refresh' }}</span>
+          <button class="refresh-btn secondary" (click)="refreshPlantData()" [disabled]="appState.loading.isPlantLoading" title="Refresh Plant Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isPlantLoading" [class.pi-spin]="appState.loading.isPlantLoading" [class.pi-spinner]="appState.loading.isPlantLoading"></i>
+            <span>{{ appState.loading.isPlantLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
@@ -202,12 +202,12 @@
         <div class="date-range-picker">
           <label>Date Range:</label>
           <p-datepicker 
-            [(ngModel)]="detailedDateRange" 
+            [(ngModel)]="appState.detailedDateRange" 
             (ngModelChange)="onDetailedDateRangeChange($event)"
             selectionMode="range"
             dateFormat="dd/mm/yy" 
             [readonlyInput]="true"
-            [disabled]="isDetailedInverterLoading || isDetailedMeterLoading"
+            [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading"
             placeholder="Select Date Range"
             class="detail-date-picker range-picker"
             [showIcon]="true"
@@ -216,9 +216,9 @@
             [numberOfMonths]="2">
           </p-datepicker>
         </div>
-        <button class="refresh-btn" (click)="refreshDetailedData()" [disabled]="isDetailedInverterLoading || isDetailedMeterLoading" title="Refresh Detailed Data">
-          <i class="pi" [class.pi-refresh]="!isDetailedInverterLoading && !isDetailedMeterLoading" [class.pi-spin]="isDetailedInverterLoading || isDetailedMeterLoading" [class.pi-spinner]="isDetailedInverterLoading || isDetailedMeterLoading"></i>
-          <span>{{ (isDetailedInverterLoading || isDetailedMeterLoading) ? 'Loading...' : 'Refresh Detailed' }}</span>
+        <button class="refresh-btn" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading" title="Refresh Detailed Data">
+          <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedInverterLoading && !appState.loading.isDetailedMeterLoading" [class.pi-spin]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading" [class.pi-spinner]="appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading"></i>
+          <span>{{ (appState.loading.isDetailedInverterLoading || appState.loading.isDetailedMeterLoading) ? 'Loading...' : 'Refresh Detailed' }}</span>
         </button>
       </div>
     </div>
@@ -231,9 +231,9 @@
           <p>Detailed daily solar energy production from inverter with date range</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="isDetailedInverterLoading" title="Refresh Detailed Inverter Data">
-            <i class="pi" [class.pi-refresh]="!isDetailedInverterLoading" [class.pi-spin]="isDetailedInverterLoading" [class.pi-spinner]="isDetailedInverterLoading"></i>
-            <span>{{ isDetailedInverterLoading ? 'Loading...' : 'Refresh' }}</span>
+          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedInverterLoading" title="Refresh Detailed Inverter Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedInverterLoading" [class.pi-spin]="appState.loading.isDetailedInverterLoading" [class.pi-spinner]="appState.loading.isDetailedInverterLoading"></i>
+            <span>{{ appState.loading.isDetailedInverterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
@@ -267,9 +267,9 @@
           <p>Detailed daily grid energy import/export measurements with date range</p>
         </div>
         <div class="subsection-actions">
-          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="isDetailedMeterLoading" title="Refresh Detailed Meter Data">
-            <i class="pi" [class.pi-refresh]="!isDetailedMeterLoading" [class.pi-spin]="isDetailedMeterLoading" [class.pi-spinner]="isDetailedMeterLoading"></i>
-            <span>{{ isDetailedMeterLoading ? 'Loading...' : 'Refresh' }}</span>
+          <button class="refresh-btn secondary" (click)="refreshDetailedData()" [disabled]="appState.loading.isDetailedMeterLoading" title="Refresh Detailed Meter Data">
+            <i class="pi" [class.pi-refresh]="!appState.loading.isDetailedMeterLoading" [class.pi-spin]="appState.loading.isDetailedMeterLoading" [class.pi-spinner]="appState.loading.isDetailedMeterLoading"></i>
+            <span>{{ appState.loading.isDetailedMeterLoading ? 'Loading...' : 'Refresh' }}</span>
           </button>
         </div>
       </div>
