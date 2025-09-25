@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  energy-dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: energy-dashboard
+    ports:
+      - "80:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - energy-network
+
+  # Development service (optional)
+  energy-dashboard-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    container_name: energy-dashboard-dev
+    ports:
+      - "4200:4200"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    command: npm start
+    networks:
+      - energy-network
+    profiles:
+      - dev
+
+networks:
+  energy-network:
+    driver: bridge
